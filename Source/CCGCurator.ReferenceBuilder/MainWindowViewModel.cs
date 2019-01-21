@@ -1,5 +1,6 @@
 ﻿using CCGCurator.Common;
 using CCGCurator.Data;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -16,6 +17,7 @@ namespace CCGCurator.ReferenceBuilder
         private int progressValue;
         private int maximumValue = 1;
         private readonly System.Timers.Timer timer;
+        private DateTime? startTime;
 
         public MainWindowViewModel()
         {
@@ -32,11 +34,38 @@ namespace CCGCurator.ReferenceBuilder
         {
             timer.Stop();
             ProgressValue = 0;
+
+            NotifyPropertyChanged(nameof(CanCollectData));
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             NotifyPropertyChanged(nameof(ProgressValue));
+            NotifyPropertyChanged(nameof(StatusText));
+        }
+
+        public bool CanCollectData
+        {
+            get
+            {
+                return !worker.IsBusy;
+            }
+        }
+
+        private string FormatPercentage(double value, double maximum)
+        {
+            return ((int)(((double)ProgressValue / MaximumValue) * 100)).ToString() + "%";
+        }
+
+        public string StatusText
+        {
+            get
+            {
+                if (!worker.IsBusy || startTime == null)
+                    return string.Empty;
+
+                return $"Started {startTime.Value}; Time taken {DateTime.Now - startTime.Value}; {FormatPercentage(ProgressValue, MaximumValue)}";
+            }
         }
 
         public int ProgressValue
@@ -83,11 +112,7 @@ namespace CCGCurator.ReferenceBuilder
             var remoteCardData = new RemoteCardData(remoteDataFileClient);
             var fileSystemHelper = new FileSystemHelper();
 
-            //var sets = remoteCardData.GetSets();
-            var sets = new List<Set>
-            {
-                new Set("ORI", "Origins", 0)
-            };
+            var sets = remoteCardData.GetSets();
 
             MaximumValue = sets.Count;
 
@@ -147,11 +172,14 @@ namespace CCGCurator.ReferenceBuilder
 
         internal void CollectData()
         {
-            if (!worker.IsBusy)
+            if (CanCollectData)
             {
                 ProgressValue = 0;
                 worker.RunWorkerAsync();
+                NotifyPropertyChanged(nameof(CanCollectData));
                 timer.Start();
+                startTime = DateTime.Now;
+                NotifyPropertyChanged(nameof(StatusText));
             }
         }
     }

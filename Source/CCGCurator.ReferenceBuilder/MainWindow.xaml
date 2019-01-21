@@ -10,6 +10,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="10*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -21,6 +22,9 @@
         <ProgressBar Value="{Binding ProgressValue}" Maximum="{Binding MaximumValue}" />
 
         <!-- Row 1 -->
-        <Button Content="Collect Data" Click="CollectData_Click" Grid.Row="1" />
+        <Button Content="Collect Data" Click="CollectData_Click" Grid.Row="1" IsEnabled="{Binding CanCollectData}" />
+
+        <!-- Row 2 -->
+        <Label Content="{Binding StatusText}" Grid.Row="2" />
     </Grid>
 </Window>
