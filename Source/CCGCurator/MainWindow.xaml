@@ -6,7 +6,14 @@
         xmlns:local="clr-namespace:CCGCurator"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+    <DockPanel>
+        <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top" SelectedItem="{Binding SelectedImageFeed}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <local:PictureBoxHost x:Name="previewBox" />
+    </DockPanel>
 </Window>
