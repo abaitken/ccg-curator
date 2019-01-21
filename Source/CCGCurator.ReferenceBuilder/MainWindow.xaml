@@ -4,9 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CCGCurator.ReferenceBuilder"
-        mc:Ignorable="d"
+        mc:Ignorable="d"        
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+    <DockPanel>
+        <ListBox ItemsSource="{Binding Sets}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type local:Set}">
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
 </Window>
