@@ -1,26 +1,34 @@
 ﻿using CCGCurator.Common;
 using CCGCurator.Data;
-using System.Collections.Generic;
+using System.IO;
 
 namespace CCGCurator.ReferenceBuilder
 {
     class MainWindowViewModel : ViewModel
     {
-        private readonly LocalCardData localCardData;
-        private readonly RemoteCardData remoteCardData;
-
-        public MainWindowViewModel()
+        internal void CollectData()
         {
             var applicationSettings = new ApplicationSettings();
-            localCardData = new LocalCardData(applicationSettings.DatabasePath);
-            remoteCardData = new RemoteCardData();
-        }
 
-        public IEnumerable<Set> Sets
-        {
-            get
+            if (File.Exists(applicationSettings.DatabasePath))
+                File.Delete(applicationSettings.DatabasePath);
+
+            var localCardData = new LocalCardData(applicationSettings.DatabasePath);
+            var remoteCardData = new RemoteCardData();
+
+            var sets = remoteCardData.GetSets();
+            for (int setIndex = 0; setIndex < sets.Count; setIndex++)
             {
-                return remoteCardData.GetSets();
+                var set = sets[setIndex];
+                localCardData.AddSet(setIndex, set.Name, set.Code);
+
+                var cards = remoteCardData.GetCards(set);
+
+                for (int cardIndex = 0; cardIndex < cards.Count; cardIndex++)
+                {
+                    var card = cards[cardIndex];
+                    localCardData.AddCard(card.MultiverseId, card.Name, setIndex);
+                }
             }
         }
     }

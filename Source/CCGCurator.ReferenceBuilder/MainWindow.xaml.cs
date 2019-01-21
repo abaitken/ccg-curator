@@ -9,8 +9,19 @@ namespace CCGCurator.ReferenceBuilder
     {
         public MainWindow()
         {
-            DataContext = new MainWindowViewModel();
+            ViewModel = new MainWindowViewModel();
             InitializeComponent();
+        }
+
+        private MainWindowViewModel ViewModel
+        {
+            get { return DataContext as MainWindowViewModel; }
+            set { DataContext = value; }
+        }
+
+        private void CollectData_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.CollectData();
         }
     }
 }

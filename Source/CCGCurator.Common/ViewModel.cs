@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace CCGCurator.Common
 {
@@ -6,7 +7,7 @@ namespace CCGCurator.Common
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void NotifyProperyChanged(string propertyName)
+        protected void NotifyProperyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

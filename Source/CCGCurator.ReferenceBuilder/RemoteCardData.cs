@@ -7,52 +7,66 @@ using System.Net;
 
 namespace CCGCurator.ReferenceBuilder
 {
-    class Set
+    abstract class NamedItem
+    {
+        public NamedItem(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Expected a value", "name");
+            Name = name;
+        }
+        public string Name { get; }
+    }
+
+    class Set : NamedItem
     {
         public Set(string code, string name)
+            : base(name)
         {
             if (string.IsNullOrWhiteSpace(code))
                 throw new ArgumentException("Expected a value", "code");
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Expected a value", "name");
             Code = code;
-            Name = name;
         }
 
-        public string Code { get; private set; }
-        public string Name { get; private set; }
+        public string Code { get; }
+    }
+
+    class Card : NamedItem
+    {
+        public Card(string name, int multiverseId)
+            : base(name)
+        {
+            MultiverseId = multiverseId;
+        }
+
+        public int MultiverseId { get; }
     }
 
     class RemoteCardData
     {
         TemporaryFileManager temporaryFileManager = new TemporaryFileManager();
-        private List<Set> sets;
 
-        public IEnumerable<Set> GetSets()
+        public IList<Set> GetSets()
         {
-            if (sets == null)
+            var sets = new List<Set>();
+            var localSetList = temporaryFileManager.GetTemporaryFileName(".json");
+
+            using (var Client = new WebClient())
             {
-                sets = new List<Set>();
-                var localSetList = temporaryFileManager.GetTemporaryFileName(".json");
+                Client.DownloadFile("https://mtgjson.com/json/SetList.json", localSetList);
+            }
 
-                using (var Client = new WebClient())
+            using (var textReader = new StreamReader(localSetList))
+            {
+                using (var jsonReader = new JsonTextReader(textReader))
                 {
-                    Client.DownloadFile("https://mtgjson.com/json/SetList.json", localSetList);
-                }
+                    var jsonData = JObject.ReadFrom(jsonReader);
 
-                using (var textReader = new StreamReader(localSetList))
-                {
-                    using (var jsonReader = new JsonTextReader(textReader))
+                    foreach (var set in jsonData)
                     {
-                        var jsonData = JObject.ReadFrom(jsonReader);
-
-                        //var jsonSets = JArray.Parse(jsonData.SelectTokens("$.*").ToString());
-                        foreach (var set in jsonData)
-                        {
-                            var code = set["code"].ToString();
-                            var name = set["name"].ToString();
-                            sets.Add(new Set(code, name));
-                        }
+                        var code = set["code"].ToString();
+                        var name = set["name"].ToString();
+                        sets.Add(new Set(code, name));
                     }
                 }
             }
@@ -60,7 +74,35 @@ namespace CCGCurator.ReferenceBuilder
             return sets;
         }
 
+        internal IList<Card> GetCards(Set set)
+        {
+            var cards = new List<Card>();
+            var localCardList = temporaryFileManager.GetTemporaryFileName(".json");
 
-        //https://mtgjson.com/json/{SETCODE}.json.zip
+            using (var Client = new WebClient())
+            {
+                Client.DownloadFile($"https://mtgjson.com/json/{set.Code}.json", localCardList);
+            }
+
+            using (var textReader = new StreamReader(localCardList))
+            {
+                using (var jsonReader = new JsonTextReader(textReader))
+                {
+                    var jsonData = JObject.ReadFrom(jsonReader);
+                    var jcards = JArray.Parse(jsonData.SelectToken("$.cards").ToString());
+
+                    foreach (var card in jcards)
+                    {
+                        if (card["multiverseId"] == null)
+                            continue;
+
+                        var name = card["name"].ToString();
+                        var multiverseId = int.Parse(card["multiverseId"].ToString());
+                        cards.Add(new Card(name, multiverseId));
+                    }
+                }
+            }
+            return cards;
+        }
     }
 }
