@@ -1,11 +1,9 @@
 ﻿using CCGCurator.Common;
 using CCGCurator.Data;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -34,39 +32,6 @@ namespace CCGCurator.ReferenceBuilder
         {
             timer.Stop();
             ProgressValue = 0;
-
-            //var fileSystemHelper = new FileSystemHelper();
-            //var imageHashing = new pHash();
-            //var applicationSettings = new ApplicationSettings();
-            //var localCardData = new LocalCardData(applicationSettings.DatabasePath);
-            //var cardsWithoutpHash = localCardData.CardsWithoutpHash();
-            //ProgressValue = 0;
-            //MaximumValue = cardsWithoutpHash.Count;
-
-            //////var archive = ZipFile.OpenRead($"C:\\Users\\Logaan\\Desktop\\mtgtest\\ORI.zip");
-            //////var exists = archive.GetEntry("ORI/Acolyte of the Inferno.full.jpg");
-            //////exists.ExtractToFile
-            //////var nope = archive.GetEntry("ORI/blah.jpg");
-
-            //foreach (var item in cardsWithoutpHash)
-            //{
-            //    var uuid = item.Item1;
-            //    var cardName = item.Item2;
-            //    var setCode = item.Item3;
-
-            //    var setFileName = fileSystemHelper.IsInvalidFileName(setCode) ? "set_" + setCode : setCode;
-            //    try
-            //    {
-            //        var imagePath = Path.Combine(applicationSettings.ImagesFolder, setFileName, cardName + ".full.jpg");
-            //        var phash = imageHashing.ImageHash(imagePath);
-            //    }
-            //    catch (System.Exception ex)
-            //    {
-            //        Debug.WriteLine($"CARD={cardName};SET={setCode};EXCEPTION={ex.GetType()},{ex.Message}");
-            //    }
-            //    ProgressValue++;
-            //}
-            //ProgressValue = 0;
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -126,6 +91,8 @@ namespace CCGCurator.ReferenceBuilder
 
             MaximumValue = sets.Count;
 
+            var imageHashing = new pHash();
+
 
             Parallel.ForEach(sets, set =>
             {
@@ -133,9 +100,20 @@ namespace CCGCurator.ReferenceBuilder
                 {
                     var cards = remoteCardData.GetCards(set);
                     localCardData.AddSet(set);
+                    var setFileName = fileSystemHelper.IsInvalidFileName(set.Code) ? "set_" + set.Code : set.Code;
 
                     Parallel.ForEach(cards, card =>
                     {
+                        try
+                        {
+                            var imagePath = Path.Combine(applicationSettings.ImagesFolder, setFileName, card.Name + ".full.jpg");
+                            card.pHash = imageHashing.ImageHash(imagePath);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Debug.WriteLine($"CARD={card.Name};SET={set.Code};EXCEPTION={ex.GetType()},{ex.Message}");
+                        }
+
                         try
                         {
                             localCardData.AddCard(card, set);

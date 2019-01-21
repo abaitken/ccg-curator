@@ -43,7 +43,7 @@ namespace CCGCurator.Data
 
         public int MultiverseId { get; }
         public string UUID { get; }
-        public string pHash { get; }
+        public string pHash { get; set; }
     }
 
     public sealed class LocalCardData : IDisposable
