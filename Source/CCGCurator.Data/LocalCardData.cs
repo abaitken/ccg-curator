@@ -42,7 +42,7 @@ namespace CCGCurator.Data
         private void InitializeDatabase()
         {
             ExecuteNonQuery("CREATE TABLE sets(setid integer NOT NULL, name varchar(255), code varchar(10), PRIMARY KEY(setid));");
-            ExecuteNonQuery("CREATE TABLE cards(multiverseid integer NOT NULL, name varchar(255), phash varchar(255), setid integer NOT NULL, PRIMARY KEY(multiverseid));");
+            ExecuteNonQuery("CREATE TABLE cards(multiverseid integer NOT NULL, name varchar(255), phash varchar(255), setid integer NOT NULL, uuid varchar(50) NOT NULL, PRIMARY KEY(uuid));");
             ExecuteNonQuery("CREATE TABLE version(version integer NOT NULL, PRIMARY KEY(version));");
             ExecuteNonQuery($"INSERT INTO version (version) values ({version});");
         }
@@ -64,9 +64,9 @@ namespace CCGCurator.Data
             ExecuteNonQuery($"INSERT INTO sets (setid, name, code) values ({id}, '{EscapeString(name)}', '{EscapeString(code)}');");
         }
 
-        public void AddCard(int multiverseId, string name, int setid, string phash = "")
+        public void AddCard(int multiverseId, string name, int setid, string uuid, string phash = "")
         {
-            ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid) values ({multiverseId}, '{EscapeString(name)}', '{phash}', {setid});");
+            ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid, uuid) values ({multiverseId}, '{EscapeString(name)}', '{phash}', {setid}, '{uuid}');");
         }
 
         #region IDisposable Support

@@ -9,14 +9,16 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="10*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         
         <!-- Row 0 -->
-        <TextBox IsReadOnly="true" VerticalScrollBarVisibility="Visible" />
+        <!--<TextBox IsReadOnly="true" VerticalScrollBarVisibility="Visible" />-->
+        <ProgressBar Value="{Binding ProgressValue}" Maximum="{Binding MaximumValue}" />
 
         <!-- Row 1 -->
         <Button Content="Collect Data" Click="CollectData_Click" Grid.Row="1" />

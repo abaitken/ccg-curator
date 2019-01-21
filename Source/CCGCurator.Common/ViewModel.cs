@@ -7,7 +7,7 @@ namespace CCGCurator.Common
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void NotifyProperyChanged([CallerMemberName] string propertyName = null)
+        protected void NotifyPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

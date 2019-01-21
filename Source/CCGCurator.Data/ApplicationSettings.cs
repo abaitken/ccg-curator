@@ -7,8 +7,14 @@ namespace CCGCurator.Data
     {
         public ApplicationSettings()
         {
-            if (!Directory.Exists(DataFolder))
-                Directory.CreateDirectory(DataFolder);
+            CreateDirectory(DataFolder);
+            CreateDirectory(SetDataCache);
+        }
+
+        private static void CreateDirectory(string path)
+        {
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
         }
 
         public string DataFolder
@@ -24,6 +30,14 @@ namespace CCGCurator.Data
             get
             {
                 return Path.Combine(DataFolder, "data.sqlite");
+            }
+        }
+
+        public string SetDataCache
+        {
+            get
+            {
+                return Path.Combine(DataFolder, "SetDataCache");
             }
         }
     }

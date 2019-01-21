@@ -49,6 +49,7 @@
     <Compile Include="..\Include\ProductVersionInfo.cs">
       <Link>ProductVersionInfo.cs</Link>
     </Compile>
+    <Compile Include="FileSystemHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModel.cs" />
   </ItemGroup>
