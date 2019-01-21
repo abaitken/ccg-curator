@@ -1,4 +1,5 @@
 ﻿using CCGCurator.Common;
+using CCGCurator.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -8,44 +9,6 @@ using System.Net;
 
 namespace CCGCurator.ReferenceBuilder
 {
-    abstract class NamedItem
-    {
-        public NamedItem(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Expected a value", "name");
-            Name = name;
-        }
-        public string Name { get; }
-    }
-
-    class Set : NamedItem
-    {
-        public Set(string code, string name, int setId)
-            : base(name)
-        {
-            if (string.IsNullOrWhiteSpace(code))
-                throw new ArgumentException("Expected a value", "code");
-            Code = code;
-            SetId = setId;
-        }
-
-        public string Code { get; }
-        public int SetId { get; }
-    }
-
-    class Card : NamedItem
-    {
-        public Card(string name, int multiverseId, string uuid)
-            : base(name)
-        {
-            MultiverseId = multiverseId;
-            UUID = uuid;
-        }
-
-        public int MultiverseId { get; }
-        public string UUID { get; }
-    }
 
     class RemoteDataFileClient
     {

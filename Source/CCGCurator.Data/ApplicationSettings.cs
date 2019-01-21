@@ -40,5 +40,13 @@ namespace CCGCurator.Data
                 return Path.Combine(DataFolder, "SetDataCache");
             }
         }
+
+        public string ImagesFolder
+        {
+            get
+            {
+                return @"C:\Users\Logaan\Desktop\mtgtest";
+            }
+        }
     }
 }

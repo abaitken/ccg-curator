@@ -1,9 +1,51 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 
 namespace CCGCurator.Data
 {
+    public abstract class NamedItem
+    {
+        public NamedItem(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Expected a value", "name");
+            Name = name;
+        }
+        public string Name { get; }
+    }
+
+    public class Set : NamedItem
+    {
+        public Set(string code, string name, int setId)
+            : base(name)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                throw new ArgumentException("Expected a value", "code");
+            Code = code;
+            SetId = setId;
+        }
+
+        public string Code { get; }
+        public int SetId { get; }
+    }
+
+    public class Card : NamedItem
+    {
+        public Card(string name, int multiverseId, string uuid)
+            : base(name)
+        {
+            MultiverseId = multiverseId;
+            UUID = uuid;
+            pHash = string.Empty;
+        }
+
+        public int MultiverseId { get; }
+        public string UUID { get; }
+        public string pHash { get; }
+    }
+
     public sealed class LocalCardData : IDisposable
     {
         private static readonly long version = 1;
@@ -56,17 +98,20 @@ namespace CCGCurator.Data
 
         private string EscapeString(string original)
         {
+            if (string.IsNullOrEmpty(original))
+                return original;
+
             return original.Replace("'", "''");
         }
 
-        public void AddSet(int id, string name, string code)
+        public void AddSet(Set set)
         {
-            ExecuteNonQuery($"INSERT INTO sets (setid, name, code) values ({id}, '{EscapeString(name)}', '{EscapeString(code)}');");
+            ExecuteNonQuery($"INSERT INTO sets (setid, name, code) values ({set.SetId}, '{EscapeString(set.Name)}', '{EscapeString(set.Code)}');");
         }
 
-        public void AddCard(int multiverseId, string name, int setid, string uuid, string phash = "")
+        public void AddCard(Card card, Set set)
         {
-            ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid, uuid) values ({multiverseId}, '{EscapeString(name)}', '{phash}', {setid}, '{uuid}');");
+            ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid, uuid) values ({card.MultiverseId}, '{EscapeString(card.Name)}', '{EscapeString(card.pHash)}', {set.SetId}, '{EscapeString(card.UUID)}');");
         }
 
         #region IDisposable Support
@@ -92,5 +137,26 @@ namespace CCGCurator.Data
             Dispose(true);
         }
         #endregion
+
+        public IList<Tuple<string, string, string>> CardsWithoutpHash()
+        {
+            var result = new List<Tuple<string, string, string>>();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT c.uuid, c.name, s.code FROM cards AS c INNER JOIN sets AS s ON c.setid = s.setid WHERE c.phash = ''";
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        var card = new Tuple<string, string, string>(reader.GetString(0), reader.GetString(1), reader.GetString(2));
+                        result.Add(card);
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }
