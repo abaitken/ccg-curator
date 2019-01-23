@@ -12,6 +12,12 @@ namespace CCGCurator
             ViewModel = new MainWindowViewModel();
             InitializeComponent();
             Loaded += MainWindow_Loaded;
+            Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            ViewModel.Closing();
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)

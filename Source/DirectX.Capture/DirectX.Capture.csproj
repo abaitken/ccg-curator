@@ -175,7 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DShowNET\DShowNET.csproj">
-      <Project>{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}</Project>
+      <Project>{ce009bfa-5ef6-4153-b2a1-2fa79698a9ae}</Project>
       <Name>DShowNET</Name>
     </ProjectReference>
   </ItemGroup>

@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace CCGCurator
 {
-    class MainWindowViewModel : ViewModel
+    class MainWindowViewModel : ViewModel, IDisposable
     {
         private ImageFeed selectedImageFeed;
         private bool viewLoaded;
@@ -17,7 +17,14 @@ namespace CCGCurator
         private Bitmap cameraBitmap;
         private Capture capture;
         private double fScaleFactor;
-        Control previewBox;
+
+        internal void Closing()
+        {
+            capture.Stop();
+            capture.PreviewWindow = null;
+        }
+
+        Control captureBox;
 
         public IEnumerable<ImageFeed> ImageFeeds
         {
@@ -38,7 +45,7 @@ namespace CCGCurator
                 return;
 
             viewLoaded = true;
-            this.previewBox = previewBox;
+            this.captureBox = new PictureBox();
 
             cameraFilters = new Filters();
             var imageFeeds = new List<ImageFeed>();
@@ -80,7 +87,7 @@ namespace CCGCurator
                 capture.FrameSize = new Size(1024, 768);
 
             fScaleFactor = Convert.ToDouble(capture.FrameSize.Height) / 480;
-            capture.PreviewWindow = previewBox;
+            capture.PreviewWindow = captureBox;
             capture.FrameEvent2 += CaptureDone;
             capture.GrapImg();
         }
@@ -89,5 +96,41 @@ namespace CCGCurator
         {
             Debug.WriteLine("CaptureDone() called");
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    capture = null;
+                    captureBox.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                // TODO: set large fields to null.
+
+                disposedValue = true;
+            }
+        }
+
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~MainWindowViewModel() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }
