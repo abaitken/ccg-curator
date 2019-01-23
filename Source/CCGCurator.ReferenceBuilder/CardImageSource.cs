@@ -39,6 +39,19 @@ namespace CCGCurator.ReferenceBuilder
                 return (Bitmap)Image.FromFile(imagePath);
             return null;
         }
+
+        internal string FindImage(Card card, Set set)
+        {
+            var setFileName = fileSystemHelper.IsInvalidFileName(set.Code) ? "set_" + set.Code : set.Code;
+
+            var imagePath = Path.Combine(imagesFolder, card.MultiverseId + ".jpg");
+            if (File.Exists(imagePath))
+                return imagePath;
+            imagePath = Path.Combine(imagesFolder, setFileName, card.Name + ".full.jpg");
+            if (File.Exists(imagePath))
+                return imagePath;
+                return null;
+        }
     }
 
     class WebImageSource : CardImageSource

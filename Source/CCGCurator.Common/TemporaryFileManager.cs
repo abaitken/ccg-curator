@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.Common
 {
-    class TemporaryFileManager : IDisposable
+    public class TemporaryFileManager : IDisposable
     {
         private readonly List<string> paths = new List<string>();
 

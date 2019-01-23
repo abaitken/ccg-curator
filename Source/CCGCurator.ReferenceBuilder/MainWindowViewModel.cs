@@ -119,7 +119,7 @@ namespace CCGCurator.ReferenceBuilder
 
             MaximumValue = sets.Count;
 
-            CardImageSource imageSource = new DualSource(applicationSettings.ImagesFolder);
+            var imageSource = new DiskImageSource(applicationSettings.ImagesFolder);
             var imageHashing = new pHash();
 
 
@@ -137,7 +137,9 @@ namespace CCGCurator.ReferenceBuilder
                             var image = imageSource.GetImage(card, set);
 
                             if (image != null)
+                            {
                                 card.pHash = imageHashing.ImageHash(image);
+                            }
                         }
                         catch (System.Exception ex)
                         {

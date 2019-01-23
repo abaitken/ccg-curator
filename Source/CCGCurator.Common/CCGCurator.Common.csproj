@@ -36,19 +36,10 @@
     <AssemblyOriginatorKeyFile>..\..\KeyPair\CCGCurator.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Shipwreck.Phash, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Shipwreck.Phash.0.3.0\lib\net452\Shipwreck.Phash.dll</HintPath>
-    </Reference>
-    <Reference Include="Shipwreck.Phash.Bitmaps, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Shipwreck.Phash.Bitmaps.0.3.0\lib\net452\Shipwreck.Phash.Bitmaps.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.3.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -63,13 +54,31 @@
     <Compile Include="FileSystemHelper.cs" />
     <Compile Include="pHash.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TemporaryFileManager.cs" />
     <Compile Include="ViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\KeyPair\CCGCurator.snk">
       <Link>CCGCurator.snk</Link>
     </None>
-    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\Libs\phash\jpeg62.dll">
+      <Link>jpeg62.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\Libs\phash\libpng12.dll">
+      <Link>libpng12.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\Libs\phash\pHash.dll">
+      <Link>pHash.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\Libs\phash\zlib1.dll">
+      <Link>zlib1.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

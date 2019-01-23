@@ -148,9 +148,9 @@ namespace CCGCurator
             blobCounter.MinHeight = Convert.ToInt32(BlobHeight * fScaleFactor); //fScaleFactor
             blobCounter.MinWidth = Convert.ToInt32(BlobWidth * fScaleFactor); //fScaleFactor
 
-//#if DEBUG
-//            Console.WriteLine("Calculate min blobsize " + blobCounter.MinWidth + "/" + blobCounter.MinHeight);
-//#endif
+            //#if DEBUG
+            //            Console.WriteLine("Calculate min blobsize " + blobCounter.MinWidth + "/" + blobCounter.MinHeight);
+            //#endif
 
             blobCounter.ProcessImage(bitmapData);
             var blobs = blobCounter.GetObjectsInformation();
@@ -379,7 +379,6 @@ namespace CCGCurator
                     }
                 }
 
-
                 if (bestMatch != null)
                 {
                     var g = Graphics.FromImage(cameraBitmap);
@@ -390,9 +389,9 @@ namespace CCGCurator
                     g.Dispose();
 
 
-//#if DEBUG
-//                    Console.WriteLine("DEBUG: Highest Similarity: " + bestMatch.Name + " ID: " + bestMatch.UUID);
-//#endif
+                    //#if DEBUG
+                    //                    Console.WriteLine("DEBUG: Highest Similarity: " + bestMatch.Name + " ID: " + bestMatch.UUID);
+                    //#endif
 
                     if (bestMatches.ContainsKey(bestMatch.UUID))
                         bestMatches[bestMatch.UUID] += 1;

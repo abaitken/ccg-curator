@@ -4,3 +4,7 @@ obj
 *.suo
 *.user
 Source/packages
+Debug
+Release
+x86
+x64
