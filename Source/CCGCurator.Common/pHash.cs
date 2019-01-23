@@ -16,8 +16,7 @@ namespace CCGCurator.Common
         public ulong ImageHash(string filename)
         {
             var bitmap = (Bitmap)Image.FromFile(filename);
-            var hash = ImagePhash.ComputeDctHash(bitmap.ToLuminanceImage());
-            return hash;
+            return ImageHash(bitmap);
         }
 
         public ulong ImageHash(Bitmap bitmap)

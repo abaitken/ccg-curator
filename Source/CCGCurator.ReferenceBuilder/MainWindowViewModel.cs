@@ -1,6 +1,7 @@
 ﻿using CCGCurator.Common;
 using CCGCurator.Data;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -110,12 +111,15 @@ namespace CCGCurator.ReferenceBuilder
             var localCardData = new LocalCardData(applicationSettings.DatabasePath);
             var remoteDataFileClient = new RemoteDataFileClient(applicationSettings);
             var remoteCardData = new RemoteCardData(remoteDataFileClient);
-            var fileSystemHelper = new FileSystemHelper();
 
             var sets = remoteCardData.GetSets();
+            sets = (from set in sets
+                   where set.Code.Equals("MIR") || set.Code.Equals("ORI")
+                   select set).ToList();
 
             MaximumValue = sets.Count;
 
+            CardImageSource imageSource = new DualSource(applicationSettings.ImagesFolder);
             var imageHashing = new pHash();
 
 
@@ -125,16 +129,15 @@ namespace CCGCurator.ReferenceBuilder
                 {
                     var cards = remoteCardData.GetCards(set);
                     localCardData.AddSet(set);
-                    var setFileName = fileSystemHelper.IsInvalidFileName(set.Code) ? "set_" + set.Code : set.Code;
 
                     Parallel.ForEach(cards, card =>
                     {
                         try
                         {
-                            var imagePath = Path.Combine(applicationSettings.ImagesFolder, setFileName, card.Name + ".full.jpg");
+                            var image = imageSource.GetImage(card, set);
 
-                            if (!File.Exists(imagePath))
-                                card.pHash = imageHashing.ImageHash(imagePath);
+                            if (image != null)
+                                card.pHash = imageHashing.ImageHash(image);
                         }
                         catch (System.Exception ex)
                         {
