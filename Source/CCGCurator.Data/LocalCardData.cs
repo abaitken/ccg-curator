@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
+using System.Linq;
 
 namespace CCGCurator.Data
 {
@@ -34,16 +35,20 @@ namespace CCGCurator.Data
     public class Card : NamedItem
     {
         public Card(string name, int multiverseId, string uuid)
+            : this(name, multiverseId, uuid, 0)
+        {
+        }
+        public Card(string name, int multiverseId, string uuid, ulong _phash)
             : base(name)
         {
             MultiverseId = multiverseId;
             UUID = uuid;
-            pHash = string.Empty;
+            pHash = _phash;
         }
 
         public int MultiverseId { get; }
         public string UUID { get; }
-        public string pHash { get; set; }
+        public ulong pHash { get; set; }
     }
 
     public sealed class LocalCardData : IDisposable
@@ -111,7 +116,21 @@ namespace CCGCurator.Data
 
         public void AddCard(Card card, Set set)
         {
-            ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid, uuid) values ({card.MultiverseId}, '{EscapeString(card.Name)}', '{EscapeString(card.pHash)}', {set.SetId}, '{EscapeString(card.UUID)}');");
+            ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid, uuid) values ({card.MultiverseId}, '{EscapeString(card.Name)}', '{card.pHash.ToString()}', {set.SetId}, '{EscapeString(card.UUID)}');");
+        }
+
+        public IEnumerable<Card> GetCardsWithHashes()
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT name, multiverseid, uuid, phash FROM cards WHERE phash != '0';";
+            var reader = command.ExecuteReader();
+            if (!reader.HasRows)
+                yield break;
+
+            while(reader.Read())
+            {
+                yield return new Card(reader.GetString(0), reader.GetInt32(1), reader.GetString(2), ulong.Parse(reader.GetString(3)));
+            }
         }
 
         #region IDisposable Support
@@ -137,26 +156,5 @@ namespace CCGCurator.Data
             Dispose(true);
         }
         #endregion
-
-        public IList<Tuple<string, string, string>> CardsWithoutpHash()
-        {
-            var result = new List<Tuple<string, string, string>>();
-
-            var command = connection.CreateCommand();
-            command.CommandText = "SELECT c.uuid, c.name, s.code FROM cards AS c INNER JOIN sets AS s ON c.setid = s.setid WHERE c.phash = ''";
-            using (var reader = command.ExecuteReader())
-            {
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        var card = new Tuple<string, string, string>(reader.GetString(0), reader.GetString(1), reader.GetString(2));
-                        result.Add(card);
-                    }
-                }
-            }
-
-            return result;
-        }
     }
 }

@@ -16,5 +16,18 @@ namespace CCGCurator
             control.Dock = DockStyle.Fill;
             Child = control;
         }
+
+        public new PictureBox Child
+        {
+            get
+            {
+                return (PictureBox)base.Child;
+            }
+
+            set
+            {
+                base.Child = value;
+            }
+        }
     }
 }

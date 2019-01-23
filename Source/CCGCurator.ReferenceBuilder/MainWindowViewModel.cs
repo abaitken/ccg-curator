@@ -132,7 +132,9 @@ namespace CCGCurator.ReferenceBuilder
                         try
                         {
                             var imagePath = Path.Combine(applicationSettings.ImagesFolder, setFileName, card.Name + ".full.jpg");
-                            card.pHash = imageHashing.ImageHash(imagePath);
+
+                            if (!File.Exists(imagePath))
+                                card.pHash = imageHashing.ImageHash(imagePath);
                         }
                         catch (System.Exception ex)
                         {

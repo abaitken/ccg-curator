@@ -6,14 +6,27 @@
         xmlns:local="clr-namespace:CCGCurator"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <DockPanel>
-        <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top" SelectedItem="{Binding SelectedImageFeed}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- ROW 0 -->
+        <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top" SelectedItem="{Binding SelectedImageFeed}" Grid.Row="0" Grid.ColumnSpan="2">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Name}" />
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
-        <local:PictureBoxHost x:Name="previewBox" />
-    </DockPanel>
+        
+        <!-- ROW 1 -->
+        <local:PictureBoxHost x:Name="previewBox" DockPanel.Dock="Left" Grid.Row="1" Grid.Column="0" />
+        <local:PictureBoxHost x:Name="filteredBox" DockPanel.Dock="Right" Grid.Row="1" Grid.Column="1"/>
+    </Grid>
 </Window>
