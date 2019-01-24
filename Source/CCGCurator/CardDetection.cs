@@ -21,13 +21,10 @@ namespace CCGCurator
         // detecting matrix, stores detected cards to avoid fail detection
         private readonly Dictionary<string, int> bestMatches = new Dictionary<string, int>();
 
-        private Bitmap cameraBitmap;
-
         private readonly double fScaleFactor;
 
         public CardDetection(double fScaleFactor, List<Card> referenceCards)
         {
-            cameraBitmap = new Bitmap(800, 600);
             this.fScaleFactor = fScaleFactor;
             this.referenceCards = referenceCards;
         }
@@ -128,7 +125,7 @@ namespace CCGCurator
 
                 var transformFilter = new QuadrilateralTransformation(corners, Convert.ToInt32(211 * fScaleFactor), Convert.ToInt32(298 * fScaleFactor));
 
-                var cardBitmap = transformFilter.Apply(cameraBitmap);
+                var cardBitmap = transformFilter.Apply(bitmap);
 
                 var card = new MagicCard
                 {
@@ -211,8 +208,9 @@ namespace CCGCurator
         }
 
 
-        private void matchCard()
+        private Bitmap matchCard(Bitmap captured)
         {
+            var cameraBitmap = captured;
             //Console.WriteLine("matchCard() called with " +  magicCards.Count + " cards detected");
 
             var cardTempId = 0;
@@ -247,7 +245,7 @@ namespace CCGCurator
 
                 if (bestMatch != null)
                 {
-                    var g = Graphics.FromImage(cameraBitmap);
+                    var g = Graphics.FromImage(captured);
                     g.DrawString(bestMatch.Name, new Font("Tahoma", 25), Brushes.Black,
                         new PointF(card.corners[0].X - 29, card.corners[0].Y - 39));
                     g.DrawString(bestMatch.Name, new Font("Tahoma", 25), Brushes.Red,
@@ -295,18 +293,17 @@ namespace CCGCurator
 #endif
                 }
             }
+
+            return cameraBitmap;
         }
 
-        public Card Process(Bitmap captured, out Bitmap greyscaleDetectedImage, out Bitmap out_previewImage)
+        public Card Process(Bitmap captured, out Bitmap greyscaleDetectedImage, out Bitmap previewImage)
         {
             //Debug.WriteLine("CaptureDone() called");
 
             magicCards.Clear();
-            cameraBitmap = captured;
-            greyscaleDetectedImage = DetectCard(cameraBitmap);
-            matchCard();
-
-            out_previewImage = cameraBitmap;
+            greyscaleDetectedImage = DetectCard(captured);
+            previewImage = matchCard(captured);
 
             return bestMatch;
         }
