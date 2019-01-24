@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using AForge;
 using AForge.Imaging;
 using AForge.Imaging.Filters;
@@ -14,7 +16,6 @@ namespace CCGCurator
 {
     internal class CardDetection
     {
-        private readonly List<MagicCard> magicCards = new List<MagicCard>();
         private readonly List<Card> referenceCards;
         private Card bestMatch;
 
@@ -33,8 +34,9 @@ namespace CCGCurator
         public double BlobWidth { get; set; } = 125;
         public double DetectionThreshold { get; set; } = 10000;
 
-        private Bitmap DetectCard(Bitmap bitmap)
+        private List<MagicCard> DetectCards(Bitmap bitmap, out Bitmap detectionImage)
         {
+            List<MagicCard> magicCards = new List<MagicCard>();
             // Greyscale
             var greyscaleImage = Grayscale.CommonAlgorithms.BT709.Apply(bitmap);
 
@@ -74,12 +76,6 @@ namespace CCGCurator
 
             var shapeChecker = new SimpleShapeChecker();
 
-            var shapeDetectedImage = new Bitmap(greyscaleImage.Width, greyscaleImage.Height, PixelFormat.Format24bppRgb);
-
-            var g = Graphics.FromImage(shapeDetectedImage);
-            g.DrawImage(greyscaleImage, 0, 0);
-
-            var pen = new Pen(Color.Red, 5);
             var cardPositions = new List<IntPoint>();
 
 
@@ -88,7 +84,6 @@ namespace CCGCurator
             {
                 var edgePoints = blobCounter.GetBlobsEdgePoints(blobs[i]);
                 List<IntPoint> corners;
-                var sameCard = false;
 
                 // is triangle or quadrilateral
                 if (!shapeChecker.IsConvexPolygon(edgePoints, out corners))
@@ -103,11 +98,7 @@ namespace CCGCurator
                 corners = RotateCard(corners);
 
                 // Prevent it from detecting the same card twice
-                foreach (var point in cardPositions)
-                    if (corners[0].DistanceTo(point) < Convert.ToInt32(40 * fScaleFactor)) //fScaleFactor
-                        sameCard = true;
-
-                if (sameCard)
+                if(cardPositions.Any(point => corners[0].DistanceTo(point) < Convert.ToInt32(40 * fScaleFactor)))
                     continue;
 
                 // Hack to prevent it from detecting smaller sections of the card instead of the whole card
@@ -115,8 +106,6 @@ namespace CCGCurator
                     continue;
 
                 cardPositions.Add(corners[0]);
-
-                g.DrawPolygon(pen, ToPointsArray(corners));
 
                 // Extract the card bitmap
 
@@ -134,17 +123,10 @@ namespace CCGCurator
                 };
 
                 magicCards.Add(card);
-
-                pen.Dispose();
-                g.Dispose();
-
-                return shapeDetectedImage;
             }
 
-            pen.Dispose();
-            g.Dispose();
-
-            return shapeDetectedImage;
+            detectionImage = CreateDetectionImage(greyscaleImage, magicCards);
+            return magicCards;
         }
 
         private Point[] ToPointsArray(List<IntPoint> points)
@@ -208,7 +190,7 @@ namespace CCGCurator
         }
 
 
-        private Bitmap matchCard(Bitmap captured)
+        private Bitmap matchCard(List<MagicCard> magicCards, Bitmap captured)
         {
             var cameraBitmap = captured;
             //Console.WriteLine("matchCard() called with " +  magicCards.Count + " cards detected");
@@ -299,13 +281,29 @@ namespace CCGCurator
 
         public Card Process(Bitmap captured, out Bitmap greyscaleDetectedImage, out Bitmap previewImage)
         {
-            //Debug.WriteLine("CaptureDone() called");
-
-            magicCards.Clear();
-            greyscaleDetectedImage = DetectCard(captured);
-            previewImage = matchCard(captured);
+            var cards = DetectCards(captured, out greyscaleDetectedImage);
+            previewImage = matchCard(cards, captured);
 
             return bestMatch;
+        }
+
+        private Bitmap CreateDetectionImage(Bitmap captured, List<MagicCard> cards)
+        {
+            var shapeDetectedImage = new Bitmap(captured.Width, captured.Height, PixelFormat.Format24bppRgb);
+            var g = Graphics.FromImage(shapeDetectedImage);
+            g.DrawImage(captured, 0, 0);
+
+            var pen = new Pen(Color.Red, 5);
+
+            foreach (var card in cards)
+            {
+                g.DrawPolygon(pen, ToPointsArray(card.corners));
+            }
+
+            pen.Dispose();
+            g.Dispose();
+
+            return shapeDetectedImage;
         }
 
         internal class MagicCard
