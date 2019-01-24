@@ -25,8 +25,15 @@ namespace CCGCurator
 
         internal void Closing()
         {
-            capture.Stop();
-            capture.PreviewWindow = null;
+            StopCapturing();
+
+            Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
+            Settings.Save();
+        }
+
+        private ISettings Settings
+        {
+            get { return Properties.Settings.Default; }
         }
 
         public IEnumerable<ImageFeed> ImageFeeds
@@ -51,7 +58,7 @@ namespace CCGCurator
             this.previewBox = previewBox;
             this.filteredBox = filteredBox;
             this.captureBox = new PictureBox();
-            loadSourceCards();
+            LoadSourceCards();
             cameraFilters = new Filters();
             var imageFeeds = new List<ImageFeed>();
             for (int i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
@@ -59,7 +66,12 @@ namespace CCGCurator
                 imageFeeds.Add(new ImageFeed(cameraFilters.VideoInputDevices[i].Name, i));
             }
             ImageFeeds = imageFeeds;
-            SelectedImageFeed = imageFeeds[2];
+
+            var previousIndex = Settings.WebcamIndex;
+            if (previousIndex >= imageFeeds.Count)
+                previousIndex = 0;
+
+            SelectedImageFeed = imageFeeds[previousIndex];
         }
 
         public ImageFeed SelectedImageFeed
@@ -75,27 +87,38 @@ namespace CCGCurator
             }
         }
 
-
-        private void ImageFeedHasChanged()
+        private Size CalculateCaptureFrameSize(Size maxSize)
         {
-            if(capture != null)
+            if (maxSize.Height >= 768)
+                return new Size(1024, 768);
+            if (maxSize.Height > 480)
+                return new Size(800, 600);
+            return new Size(640, 480);
+        }
+
+        private void StopCapturing()
+        {
+            if (capture != null)
             {
                 capture.Stop();
+                capture.PreviewWindow = null;
+                capture.FrameEvent2 -= CaptureDone;
+                capture.Dispose();
                 capture = null;
                 cardDetection = null;
             }
+
+        }
+
+        private void ImageFeedHasChanged()
+        {
+            StopCapturing();
+            if (SelectedImageFeed == null)
+                return;
             capture = new Capture(cameraFilters.VideoInputDevices[SelectedImageFeed.FilterIndex], cameraFilters.AudioInputDevices[0]);
-
-            var maxSize = capture.VideoCaps.MaxFrameSize;
-
-            capture.FrameSize = new Size(640, 480);
-
-            if (maxSize.Height > 480)
-                capture.FrameSize = new Size(800, 600);
-
-            if (maxSize.Height >= 768)
-                capture.FrameSize = new Size(1024, 768);
-
+            if (capture.VideoCaps == null)
+                return;
+            capture.FrameSize = CalculateCaptureFrameSize(capture.VideoCaps.MaxFrameSize);
 
             var fScaleFactor = Convert.ToDouble(capture.FrameSize.Height) / 480;
             cardDetection = new CardDetection(fScaleFactor, referenceCards);
@@ -103,8 +126,6 @@ namespace CCGCurator
             capture.FrameEvent2 += CaptureDone;
             capture.GrapImg();
         }
-
-
 
         private void CaptureDone(Bitmap captured)
         {
@@ -115,7 +136,7 @@ namespace CCGCurator
             previewBox.Image = preview;
         }
 
-        private void loadSourceCards()
+        private void LoadSourceCards()
         {
             var localCardData = new LocalCardData(new Data.ApplicationSettings().DatabasePath);
             referenceCards = new List<Card>(localCardData.GetCardsWithHashes());
@@ -130,6 +151,7 @@ namespace CCGCurator
             {
                 if (disposing)
                 {
+                    capture.Dispose();
                     capture = null;
                     captureBox.Dispose();
                 }
