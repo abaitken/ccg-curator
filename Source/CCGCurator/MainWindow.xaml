@@ -10,14 +10,11 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
         
         <!-- ROW 0 -->
-        <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top" SelectedItem="{Binding SelectedImageFeed}" Grid.Row="0" Grid.ColumnSpan="2">
+        <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top" SelectedItem="{Binding SelectedImageFeed}" Grid.Row="0">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Name}" />
@@ -26,7 +23,14 @@
         </ComboBox>
         
         <!-- ROW 1 -->
-        <local:PictureBoxHost x:Name="previewBox" DockPanel.Dock="Left" Grid.Row="1" Grid.Column="0" />
-        <local:PictureBoxHost x:Name="filteredBox" DockPanel.Dock="Right" Grid.Row="1" Grid.Column="1"/>
+        <UniformGrid Grid.Row="1" Columns="2">
+            <local:PictureBoxHost x:Name="previewBox" DockPanel.Dock="Left" />
+            <local:PictureBoxHost x:Name="filteredBox" DockPanel.Dock="Right"/>
+        </UniformGrid>
+
+        <!-- ROW 2 -->
+        <StackPanel DataContext="{Binding DetectedCard}" Grid.Row="2">
+            <TextBlock Text="{Binding Name}" />
+        </StackPanel>      
     </Grid>
 </Window>

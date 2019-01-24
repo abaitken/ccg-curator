@@ -10,8 +10,9 @@ using System.Windows.Forms;
 namespace CCGCurator
 {
 
-    class MainWindowViewModel : ViewModel, IDisposable
+    class MainWindowViewModel : ViewModel
     {
+        private static readonly object _locker = new object();
         private ImageFeed selectedImageFeed;
         private bool viewLoaded;
         private PictureBox previewBox;
@@ -45,6 +46,21 @@ namespace CCGCurator
             set
             {
                 imageFeeds = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public Card DetectedCard
+        {
+            get { return detectedCard; }
+            set
+            {
+                if (detectedCard == value)
+                    return;
+
+                if (detectedCard == null)
+                    return;
+                detectedCard = value;
                 NotifyPropertyChanged();
             }
         }
@@ -129,11 +145,14 @@ namespace CCGCurator
 
         private void CaptureDone(Bitmap captured)
         {
-            Bitmap filtered;
-            Bitmap preview;
-            cardDetection.Process(captured, out filtered, out preview);
-            filteredBox.Image = filtered;
-            previewBox.Image = preview;
+            lock (_locker)
+            {
+                Bitmap filtered;
+                Bitmap preview;
+                DetectedCard = cardDetection.Process(captured, out filtered, out preview);
+                filteredBox.Image = filtered;
+                previewBox.Image = preview;
+            }
         }
 
         private void LoadSourceCards()
@@ -142,41 +161,7 @@ namespace CCGCurator
             referenceCards = new List<Card>(localCardData.GetCardsWithHashes());
         }
 
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    capture.Dispose();
-                    capture = null;
-                    captureBox.Dispose();
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~MainWindowViewModel() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
+        private Card detectedCard;
+       
     }
 }
