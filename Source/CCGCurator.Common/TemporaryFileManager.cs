@@ -17,7 +17,7 @@ namespace CCGCurator.Common
 
         public string GetTemporaryFileName(string extension)
         {
-            var result = Path.Combine(Path.GetTempPath(), Path.GetTempFileName() + extension);
+            var result = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
             paths.Add(result);
             return result;
         }
