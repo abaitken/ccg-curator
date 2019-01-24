@@ -1,23 +1,26 @@
-﻿using CCGCurator.Common;
-using CCGCurator.Data;
-using System;
-using System.Linq;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using CCGCurator.Common;
+using CCGCurator.Data;
+using Newtonsoft.Json;
+using Timer = System.Timers.Timer;
 
 namespace CCGCurator.ReferenceBuilder
 {
-    class MainWindowViewModel : ViewModel
+    internal class MainWindowViewModel : ViewModel
     {
-        BackgroundWorker worker;
-        private int progressValue;
+        private readonly Timer timer;
+        private readonly BackgroundWorker worker;
         private int maximumValue = 1;
-        private readonly System.Timers.Timer timer;
+        private int progressValue;
         private DateTime? startTime;
 
         public MainWindowViewModel()
@@ -26,9 +29,49 @@ namespace CCGCurator.ReferenceBuilder
             worker.DoWork += Worker_DoWork;
             worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
 
-            timer = new System.Timers.Timer(200);
+            timer = new Timer(200);
             timer.Elapsed += Timer_Elapsed;
             timer.Stop();
+        }
+
+        public bool CanCollectData => !worker.IsBusy;
+
+        public string StatusText
+        {
+            get
+            {
+                if (!worker.IsBusy || startTime == null)
+                    return string.Empty;
+
+                return
+                    $"Started {startTime.Value}; Time taken {DateTime.Now - startTime.Value}; {FormatPercentage(ProgressValue, MaximumValue)}";
+            }
+        }
+
+        public int ProgressValue
+        {
+            get => progressValue;
+
+            set
+            {
+                if (progressValue == value)
+                    return;
+                progressValue = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public int MaximumValue
+        {
+            get => maximumValue;
+
+            set
+            {
+                if (maximumValue == value)
+                    return;
+                maximumValue = value;
+                NotifyPropertyChanged();
+            }
         }
 
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -45,60 +88,9 @@ namespace CCGCurator.ReferenceBuilder
             NotifyPropertyChanged(nameof(StatusText));
         }
 
-        public bool CanCollectData
-        {
-            get
-            {
-                return !worker.IsBusy;
-            }
-        }
-
         private string FormatPercentage(double value, double maximum)
         {
-            return ((int)(((double)ProgressValue / MaximumValue) * 100)).ToString() + "%";
-        }
-
-        public string StatusText
-        {
-            get
-            {
-                if (!worker.IsBusy || startTime == null)
-                    return string.Empty;
-
-                return $"Started {startTime.Value}; Time taken {DateTime.Now - startTime.Value}; {FormatPercentage(ProgressValue, MaximumValue)}";
-            }
-        }
-
-        public int ProgressValue
-        {
-            get
-            {
-                return progressValue;
-            }
-
-            set
-            {
-                if (progressValue == value)
-                    return;
-                progressValue = value;
-                NotifyPropertyChanged();
-            }
-        }
-
-        public int MaximumValue
-        {
-            get
-            {
-                return maximumValue;
-            }
-
-            set
-            {
-                if (maximumValue == value)
-                    return;
-                maximumValue = value;
-                NotifyPropertyChanged();
-            }
+            return (int) ((double) ProgressValue / MaximumValue * 100) + "%";
         }
 
         private void Worker_DoWork(object sender, DoWorkEventArgs e)
@@ -114,12 +106,12 @@ namespace CCGCurator.ReferenceBuilder
 
             var sets = remoteCardData.GetSets();
             sets = (from set in sets
-                   where set.Code.Equals("MIR") || set.Code.Equals("ORI")
-                   select set).ToList();
+                where set.Code.Equals("MIR") || set.Code.Equals("ORI")
+                select set).ToList();
 
             MaximumValue = sets.Count;
 
-            var imageSource = new DiskImageSource(applicationSettings.ImagesFolder);
+            var imageSource = new DualImageSource(applicationSettings.ImagesFolder);
             var imageHashing = new pHash();
 
 
@@ -136,12 +128,9 @@ namespace CCGCurator.ReferenceBuilder
                         {
                             var image = imageSource.GetImage(card, set);
 
-                            if (image != null)
-                            {
-                                card.pHash = imageHashing.ImageHash(image);
-                            }
+                            if (image != null) card.pHash = imageHashing.ImageHash(image);
                         }
-                        catch (System.Exception ex)
+                        catch (Exception ex)
                         {
                             Debug.WriteLine($"CARD={card.Name};SET={set.Code};EXCEPTION={ex.GetType()},{ex.Message}");
                         }
@@ -150,21 +139,22 @@ namespace CCGCurator.ReferenceBuilder
                         {
                             localCardData.AddCard(card, set);
                         }
-                        catch (System.Data.SQLite.SQLiteException e4)
+                        catch (SQLiteException e4)
                         {
-                            Debug.WriteLine($"CARD={card.MultiverseId},{card.Name};SET={set.Code},{set.Name};EXCEPTION={e4.GetType()},{e4.Message}");
+                            Debug.WriteLine(
+                                $"CARD={card.MultiverseId},{card.Name};SET={set.Code},{set.Name};EXCEPTION={e4.GetType()},{e4.Message}");
                         }
                     });
                 }
-                catch (Newtonsoft.Json.JsonReaderException e1)
+                catch (JsonReaderException e1)
                 {
                     Debug.WriteLine($"SET={set.Code},{set.Name};EXCEPTION={e1.GetType()},{e1.Message}");
                 }
-                catch (System.Net.WebException e2)
+                catch (WebException e2)
                 {
                     Debug.WriteLine($"SET={set.Code},{set.Name};EXCEPTION={e2.GetType()},{e2.Message}");
                 }
-                catch (System.Data.SQLite.SQLiteException e3)
+                catch (SQLiteException e3)
                 {
                     Debug.WriteLine($"SET={set.Code},{set.Name};EXCEPTION={e3.GetType()},{e3.Message}");
                 }
@@ -173,7 +163,7 @@ namespace CCGCurator.ReferenceBuilder
                     Interlocked.Increment(ref progressValue);
                 }
             });
-
+            localCardData.Close();
             ProgressValue = MaximumValue;
         }
 

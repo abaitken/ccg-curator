@@ -6,52 +6,7 @@ using System.Linq;
 
 namespace CCGCurator.Data
 {
-    public abstract class NamedItem
-    {
-        public NamedItem(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Expected a value", "name");
-            Name = name;
-        }
-        public string Name { get; }
-    }
-
-    public class Set : NamedItem
-    {
-        public Set(string code, string name, int setId)
-            : base(name)
-        {
-            if (string.IsNullOrWhiteSpace(code))
-                throw new ArgumentException("Expected a value", "code");
-            Code = code;
-            SetId = setId;
-        }
-
-        public string Code { get; }
-        public int SetId { get; }
-    }
-
-    public class Card : NamedItem
-    {
-        public Card(string name, int multiverseId, string uuid)
-            : this(name, multiverseId, uuid, 0)
-        {
-        }
-        public Card(string name, int multiverseId, string uuid, ulong _phash)
-            : base(name)
-        {
-            MultiverseId = multiverseId;
-            UUID = uuid;
-            pHash = _phash;
-        }
-
-        public int MultiverseId { get; }
-        public string UUID { get; }
-        public ulong pHash { get; set; }
-    }
-
-    public sealed class LocalCardData : IDisposable
+    public sealed class LocalCardData
     {
         private static readonly long version = 1;
 
@@ -67,6 +22,11 @@ namespace CCGCurator.Data
                 InitializeDatabase();
 
             CheckVersion();
+        }
+
+        public void Close()
+        {
+            connection.Close();
         }
 
         private void CheckVersion()
@@ -132,29 +92,5 @@ namespace CCGCurator.Data
                 yield return new Card(reader.GetString(0), reader.GetInt32(1), reader.GetString(2), ulong.Parse(reader.GetString(3)));
             }
         }
-
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    connection.Close();
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-        }
-        #endregion
     }
 }
