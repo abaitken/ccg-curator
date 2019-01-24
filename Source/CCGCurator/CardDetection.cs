@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
@@ -16,16 +15,14 @@ namespace CCGCurator
 {
     internal class CardDetection
     {
+        private readonly double scaleFactor;
+        private readonly pHash phash;
         private readonly List<Card> referenceCards;
 
-        // detecting matrix, stores detected cards to avoid fail detection
-        private readonly Dictionary<string, int> bestMatches = new Dictionary<string, int>();
-
-        private readonly double fScaleFactor;
-
-        public CardDetection(double fScaleFactor, List<Card> referenceCards)
+        public CardDetection(double scaleFactor, List<Card> referenceCards)
         {
-            this.fScaleFactor = fScaleFactor;
+            phash = new pHash();
+            this.scaleFactor = scaleFactor;
             this.referenceCards = referenceCards;
         }
 
@@ -33,9 +30,9 @@ namespace CCGCurator
         public double BlobWidth { get; set; } = 125;
         public double DetectionThreshold { get; set; } = 10000;
 
-        private List<MagicCard> DetectCards(Bitmap bitmap, out Bitmap detectionImage)
+        private List<DetectedCard> DetectCards(Bitmap bitmap, out Bitmap detectionImage)
         {
-            List<MagicCard> magicCards = new List<MagicCard>();
+            var magicCards = new List<DetectedCard>();
             // Greyscale
             var greyscaleImage = Grayscale.CommonAlgorithms.BT709.Apply(bitmap);
 
@@ -64,8 +61,8 @@ namespace CCGCurator
             var blobCounter = new BlobCounter
             {
                 FilterBlobs = true,
-                MinHeight = Convert.ToInt32(BlobHeight * fScaleFactor),
-                MinWidth = Convert.ToInt32(BlobWidth * fScaleFactor)
+                MinHeight = Convert.ToInt32(BlobHeight * scaleFactor),
+                MinWidth = Convert.ToInt32(BlobWidth * scaleFactor)
             };
 
             blobCounter.ProcessImage(bitmapData);
@@ -79,7 +76,7 @@ namespace CCGCurator
 
 
             // Loop through detected shapes
-            for (int i = 0; i < blobs.Length; i++)
+            for (var i = 0; i < blobs.Length; i++)
             {
                 var edgePoints = blobCounter.GetBlobsEdgePoints(blobs[i]);
                 List<IntPoint> corners;
@@ -91,17 +88,17 @@ namespace CCGCurator
                 var subType = shapeChecker.CheckPolygonSubType(corners);
 
                 // Only return 4 corner rectanges
-                if ((subType != PolygonSubType.Parallelogram && subType != PolygonSubType.Rectangle) ||
+                if (subType != PolygonSubType.Parallelogram && subType != PolygonSubType.Rectangle ||
                     corners.Count != 4) continue;
 
                 corners = RotateCard(corners);
 
                 // Prevent it from detecting the same card twice
-                if (cardPositions.Any(point => corners[0].DistanceTo(point) < Convert.ToInt32(40 * fScaleFactor)))
+                if (cardPositions.Any(point => corners[0].DistanceTo(point) < Convert.ToInt32(40 * scaleFactor)))
                     continue;
 
                 // Hack to prevent it from detecting smaller sections of the card instead of the whole card
-                if (GetArea(corners) < Convert.ToInt32(DetectionThreshold * fScaleFactor)) //fScaleFactor
+                if (GetArea(corners) < Convert.ToInt32(DetectionThreshold * scaleFactor))
                     continue;
 
                 cardPositions.Add(corners[0]);
@@ -111,11 +108,12 @@ namespace CCGCurator
                 // Debug
                 //var transformFilter = new QuadrilateralTransformation(corners, 600, 800);
 
-                var transformFilter = new QuadrilateralTransformation(corners, Convert.ToInt32(211 * fScaleFactor), Convert.ToInt32(298 * fScaleFactor));
+                var transformFilter = new QuadrilateralTransformation(corners, Convert.ToInt32(211 * scaleFactor),
+                    Convert.ToInt32(298 * scaleFactor));
 
                 var cardBitmap = transformFilter.Apply(bitmap);
 
-                var card = new MagicCard
+                var card = new DetectedCard
                 {
                     corners = corners,
                     cardBitmap = cardBitmap
@@ -188,57 +186,34 @@ namespace CCGCurator
             return result;
         }
 
-
-        private List<MagicCard> MatchCards(List<MagicCard> magicCards)
+        private Card FindBestMatch(ulong needle)
         {
-            var phash = new pHash();
+            Card bestMatch = null;
+            var lowestHamming = int.MaxValue;
 
-            var matchedCards = new List<MagicCard>();
-
-            foreach (var card in magicCards)
+            foreach (var referenceCard in referenceCards)
             {
-                Card bestMatch = null;
-
-                var cardHash = phash.ImageHash(card.cardBitmap);
-                var lowestHamming = int.MaxValue;
-
-                foreach (var referenceCard in referenceCards)
+                var hamming = phash.HammingDistance(referenceCard.pHash, needle);
+                if (hamming < lowestHamming)
                 {
-                    var hamming = phash.HammingDistance(referenceCard.pHash, cardHash);
-                    if (hamming < lowestHamming)
-                    {
-                        lowestHamming = hamming;
-                        bestMatch = referenceCard;
-                    }
+                    lowestHamming = hamming;
+                    bestMatch = referenceCard;
                 }
+            }
+
+            return bestMatch;
+        }
+
+        private List<Tuple<DetectedCard, Card>> MatchCards(List<DetectedCard> detections)
+        {
+            var matchedCards = new List<Tuple<DetectedCard, Card>>();
+            foreach (var detectedCard in detections)
+            {
+                var cardHash = phash.ImageHash(detectedCard.cardBitmap);
+                var bestMatch = FindBestMatch(cardHash);
 
                 if (bestMatch != null)
                 {
-                    if (bestMatches.ContainsKey(bestMatch.UUID))
-                        bestMatches[bestMatch.UUID] += 1;
-                    else
-                        bestMatches[bestMatch.UUID] = 1;
-
-
-                    var maxValue = 0;
-                    string bestMatchId = null;
-
-                    foreach (var match in bestMatches)
-                        if (match.Value > maxValue)
-                        {
-                            maxValue = match.Value;
-                            bestMatchId = match.Key;
-                        }
-
-                    if (bestMatchId != bestMatch.UUID)
-                        continue;
-                }
-
-                if (bestMatch != null)
-                {
-                    card.referenceCard = bestMatch;
-                    matchedCards.Add(card);
-
                     // highly experimental
 
 #if NULL
@@ -253,40 +228,43 @@ namespace CCGCurator
                         Console.WriteLine("DEBUG: "+ text);
                     }
 #endif
+                    matchedCards.Add(new Tuple<DetectedCard, Card>(detectedCard, bestMatch));
                 }
             }
 
             return matchedCards;
         }
 
-        public void Process(Bitmap captured, out Bitmap greyscaleDetectedImage, out Bitmap previewImage)
+        public void Process(Bitmap captured, out Bitmap greyscaleDetectionImage, out Bitmap previewImage)
         {
-            var cards = DetectCards(captured, out greyscaleDetectedImage);
+            var cards = DetectCards(captured, out greyscaleDetectionImage);
             var matchedCards = MatchCards(cards);
             previewImage = CreatePreviewImage(matchedCards, captured);
-
         }
 
-        private Bitmap CreatePreviewImage(List<MagicCard> matchedCards, Bitmap captured)
+        private Bitmap CreatePreviewImage(List<Tuple<DetectedCard, Card>> matches, Bitmap captured)
         {
-            var resultImage = (Bitmap)captured.Clone();
+            var resultImage = (Bitmap) captured.Clone();
             var g = Graphics.FromImage(resultImage);
-
-            foreach (var card in matchedCards)
+            var font = new Font("Tahoma", 25);
+            foreach (var item in matches)
             {
+                var detection = item.Item1;
+                var card = item.Item2;
                 //ContrastCorrection filter = new ContrastCorrection(15);
                 //filter.ApplyInPlace(card.cardArtBitmap);
-                g.DrawString(card.referenceCard.Name, new Font("Tahoma", 25), Brushes.Black,
-                    new PointF(card.corners[0].X - 29, card.corners[0].Y - 39));
-                g.DrawString(card.referenceCard.Name, new Font("Tahoma", 25), Brushes.Red,
-                    new PointF(card.corners[0].X - 30, card.corners[0].Y - 40));
+                g.DrawString(card.Name, font, Brushes.Black,
+                    new PointF(detection.corners[0].X - 29, detection.corners[0].Y - 39));
+                g.DrawString(card.Name, font, Brushes.Red,
+                    new PointF(detection.corners[0].X - 30, detection.corners[0].Y - 40));
             }
+
             g.Dispose();
 
             return resultImage;
         }
 
-        private Bitmap CreateDetectionImage(Bitmap captured, List<MagicCard> cards)
+        private Bitmap CreateDetectionImage(Bitmap captured, List<DetectedCard> cards)
         {
             var shapeDetectedImage = new Bitmap(captured.Width, captured.Height, PixelFormat.Format24bppRgb);
             var g = Graphics.FromImage(shapeDetectedImage);
@@ -294,10 +272,7 @@ namespace CCGCurator
 
             var pen = new Pen(Color.Red, 5);
 
-            foreach (var card in cards)
-            {
-                g.DrawPolygon(pen, ToPointsArray(card.corners));
-            }
+            foreach (var card in cards) g.DrawPolygon(pen, ToPointsArray(card.corners));
 
             pen.Dispose();
             g.Dispose();
@@ -305,11 +280,10 @@ namespace CCGCurator
             return shapeDetectedImage;
         }
 
-        internal class MagicCard
+        private class DetectedCard
         {
             public Bitmap cardBitmap;
             public List<IntPoint> corners;
-            public Card referenceCard;
         }
     }
 }
