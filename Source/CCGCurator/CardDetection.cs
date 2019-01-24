@@ -17,7 +17,6 @@ namespace CCGCurator
     internal class CardDetection
     {
         private readonly List<Card> referenceCards;
-        private Card bestMatch;
 
         // detecting matrix, stores detected cards to avoid fail detection
         private readonly Dictionary<string, int> bestMatches = new Dictionary<string, int>();
@@ -98,7 +97,7 @@ namespace CCGCurator
                 corners = RotateCard(corners);
 
                 // Prevent it from detecting the same card twice
-                if(cardPositions.Any(point => corners[0].DistanceTo(point) < Convert.ToInt32(40 * fScaleFactor)))
+                if (cardPositions.Any(point => corners[0].DistanceTo(point) < Convert.ToInt32(40 * fScaleFactor)))
                     continue;
 
                 // Hack to prevent it from detecting smaller sections of the card instead of the whole card
@@ -190,34 +189,22 @@ namespace CCGCurator
         }
 
 
-        private Bitmap matchCard(List<MagicCard> magicCards, Bitmap captured)
+        private List<MagicCard> MatchCards(List<MagicCard> magicCards)
         {
-            var cameraBitmap = captured;
-            //Console.WriteLine("matchCard() called with " +  magicCards.Count + " cards detected");
+            var phash = new pHash();
 
-            var cardTempId = 0;
-            var Phash = new pHash();
+            var matchedCards = new List<MagicCard>();
 
             foreach (var card in magicCards)
             {
-                cardTempId++;
+                Card bestMatch = null;
 
-                //ContrastCorrection filter = new ContrastCorrection(15);
-                //filter.ApplyInPlace(card.cardArtBitmap);
-
-                // Write the image to disk to be read by the pHash library.. should really find
-                // a way to pass a pointer to image data directly
-                //card.cardBitmap.Save("tempCard" + cardTempId + ".jpg", ImageFormat.Jpeg);
-
-
-                // Phash.ph_dct_imagehash("tempCard" + cardTempId + ".jpg", ref cardHash);
-                //var cardHash = Phash.ImageHash(".\\tempCard" + cardTempId + ".jpg");
-                var cardHash = Phash.ImageHash(card.cardBitmap);
+                var cardHash = phash.ImageHash(card.cardBitmap);
                 var lowestHamming = int.MaxValue;
 
                 foreach (var referenceCard in referenceCards)
                 {
-                    var hamming = Phash.HammingDistance(referenceCard.pHash, cardHash);
+                    var hamming = phash.HammingDistance(referenceCard.pHash, cardHash);
                     if (hamming < lowestHamming)
                     {
                         lowestHamming = hamming;
@@ -227,13 +214,6 @@ namespace CCGCurator
 
                 if (bestMatch != null)
                 {
-                    var g = Graphics.FromImage(captured);
-                    g.DrawString(bestMatch.Name, new Font("Tahoma", 25), Brushes.Black,
-                        new PointF(card.corners[0].X - 29, card.corners[0].Y - 39));
-                    g.DrawString(bestMatch.Name, new Font("Tahoma", 25), Brushes.Red,
-                        new PointF(card.corners[0].X - 30, card.corners[0].Y - 40));
-                    g.Dispose();
-
                     if (bestMatches.ContainsKey(bestMatch.UUID))
                         bestMatches[bestMatch.UUID] += 1;
                     else
@@ -257,7 +237,7 @@ namespace CCGCurator
                 if (bestMatch != null)
                 {
                     card.referenceCard = bestMatch;
-
+                    matchedCards.Add(card);
 
                     // highly experimental
 
@@ -276,15 +256,34 @@ namespace CCGCurator
                 }
             }
 
-            return cameraBitmap;
+            return matchedCards;
         }
 
-        public Card Process(Bitmap captured, out Bitmap greyscaleDetectedImage, out Bitmap previewImage)
+        public void Process(Bitmap captured, out Bitmap greyscaleDetectedImage, out Bitmap previewImage)
         {
             var cards = DetectCards(captured, out greyscaleDetectedImage);
-            previewImage = matchCard(cards, captured);
+            var matchedCards = MatchCards(cards);
+            previewImage = CreatePreviewImage(matchedCards, captured);
 
-            return bestMatch;
+        }
+
+        private Bitmap CreatePreviewImage(List<MagicCard> matchedCards, Bitmap captured)
+        {
+            var resultImage = (Bitmap)captured.Clone();
+            var g = Graphics.FromImage(resultImage);
+
+            foreach (var card in matchedCards)
+            {
+                //ContrastCorrection filter = new ContrastCorrection(15);
+                //filter.ApplyInPlace(card.cardArtBitmap);
+                g.DrawString(card.referenceCard.Name, new Font("Tahoma", 25), Brushes.Black,
+                    new PointF(card.corners[0].X - 29, card.corners[0].Y - 39));
+                g.DrawString(card.referenceCard.Name, new Font("Tahoma", 25), Brushes.Red,
+                    new PointF(card.corners[0].X - 30, card.corners[0].Y - 40));
+            }
+            g.Dispose();
+
+            return resultImage;
         }
 
         private Bitmap CreateDetectionImage(Bitmap captured, List<MagicCard> cards)

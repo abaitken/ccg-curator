@@ -149,7 +149,7 @@ namespace CCGCurator
             {
                 Bitmap filtered;
                 Bitmap preview;
-                DetectedCard = cardDetection.Process(captured, out filtered, out preview);
+                cardDetection.Process(captured, out filtered, out preview);
                 filteredBox.Image = filtered;
                 previewBox.Image = preview;
             }
