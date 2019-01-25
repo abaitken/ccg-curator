@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -43,8 +44,23 @@ namespace CCGCurator.ReferenceBuilder
                 if (!worker.IsBusy || startTime == null)
                     return string.Empty;
 
-                return
-                    $"Started {startTime.Value}; Time taken {DateTime.Now - startTime.Value}; {FormatPercentage(ProgressValue, MaximumValue)}";
+                var timeTaken = DateTime.Now - startTime.Value;
+                var averageTimePerSet = TimeSpan.FromTicks((long)((double)timeTaken.Ticks / ProgressValue));
+                var remaining = MaximumValue - ProgressValue;
+                //var estimatedTimeRemaining = TimeSpan.FromTicks(remaining * averageTimePerSet.Ticks);
+                var remainingPercentage = (double)remaining / MaximumValue;
+                var estimatedTimeRemaining = TimeSpan.FromTicks((long)(timeTaken.Ticks / remainingPercentage));
+
+                var text = new StringBuilder();
+                text.AppendLine($"{FormatPercentage(ProgressValue, MaximumValue)}");
+                text.AppendLine($"Started {startTime.Value}");
+                text.AppendLine($"Time taken {timeTaken}");
+                text.AppendLine($"Current {ProgressValue}");
+                text.AppendLine($"Maximum {MaximumValue}");
+                text.AppendLine($"Remaining {remaining}");
+                text.AppendLine($"Time per set {averageTimePerSet}");
+                text.AppendLine($"Time remaining {estimatedTimeRemaining}");
+                return text.ToString();
             }
         }
 
