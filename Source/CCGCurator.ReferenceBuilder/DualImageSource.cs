@@ -8,17 +8,13 @@ namespace CCGCurator.ReferenceBuilder
 {
     internal class DualImageSource : CardImageSource
     {
-        private readonly string imagesFolder;
         private readonly DiskImageSource diskSource;
         private readonly WebImageSource webSource;
-        private readonly FileSystemHelper fileSystemHelper;
 
         public DualImageSource(string imagesFolder)
         {
-            fileSystemHelper = new FileSystemHelper();
             diskSource = new DiskImageSource(imagesFolder);
             webSource = new WebImageSource();
-            this.imagesFolder = imagesFolder;
         }
 
         internal override Bitmap GetImage(Card card, Set set)

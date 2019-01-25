@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using CCGCurator.Data;
 
@@ -8,14 +9,14 @@ namespace CCGCurator.ReferenceBuilder
     {
         private int currentItem;
 
-        public void DoWork(IList<Set> sets, IList<DataAction> actions)
+        public void DoWork(IList<Set> sets, IList<DataAction> actions, string imageCacheFolder)
         {
             var applicationSettings = new ApplicationSettings();
 
             var localCardData = new LocalCardData(applicationSettings.DatabasePath);
             var remoteCardData = new RemoteCardData(new RemoteDataFileClient(applicationSettings));
-
-            var imageSource = new DualImageSource(applicationSettings.ImagesFolder);
+            
+            var imageSource = new DualImageSource(imageCacheFolder);
             var logger = new Logging();
 
             Synchronous.ForEach(actions, action =>

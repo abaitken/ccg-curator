@@ -6,16 +6,29 @@
         xmlns:local="clr-namespace:CCGCurator.ReferenceBuilder"
         mc:Ignorable="d"        
         Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <local:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
+    </Window.Resources>
     <Grid>
-        <Grid.Style>
+        <Grid.Resources>
             <Style TargetType="FrameworkElement">
-                <Setter Property="Margin" Value="2,2,2,2"/>
+                <Setter Property="Margin" Value="2"/>
             </Style>
-        </Grid.Style>
+            <Style TargetType="Button">
+                <Setter Property="Margin" Value="2"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Margin" Value="2"/>
+            </Style>
+            <Style TargetType="ListBox">
+                <Setter Property="Margin" Value="2"/>
+            </Style>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="2*" />
             <RowDefinition Height="23" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -24,7 +37,6 @@
         </Grid.ColumnDefinitions>
 
         <!-- Row 0 -->
-
         <Grid Grid.Row="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -40,16 +52,16 @@
         <!-- Row 1 -->
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <ListBox x:Name="SetListBox" ItemsSource="{Binding SetInfoCollectionView}" Grid.Column="0" IsEnabled="{Binding CanCollectData}">
+            <ListBox x:Name="SetListBox" ItemsSource="{Binding SetInfoCollectionView}" Grid.Column="0" IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type local:SetInfo}">
-                        <CheckBox Content="{Binding Name}" IsChecked="{Binding InDatabase}"></CheckBox>
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding InDatabase}"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
@@ -60,9 +72,22 @@
         <ProgressBar Value="{Binding ProgressValue}" Maximum="{Binding MaximumValue}" Grid.Row="2" />
 
         <!-- Row 3 -->
-        <Button Content="Update" Click="CollectData_Click" Grid.Row="3" IsEnabled="{Binding CanCollectData}" />
+        <Button Content="Update" Click="CollectData_Click" Grid.Row="3" IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}" />
 
         <!-- Row 4 -->
-        <Label Content="{Binding StatusText}" Grid.Row="4" />
+        <Grid Grid.Row="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding ImageCachePath}"/>
+            <Button Content="Browse" Click="BrowseButton_OnClick" Grid.Column="1"  IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}"/>
+        </Grid>
+
+        <!-- Row 5 -->
+        <Label Content="{Binding StatusText}" Grid.Row="5" />
     </Grid>
 </Window>

@@ -9,6 +9,7 @@ namespace CCGCurator.Data
         {
             CreateDirectory(DataFolder);
             CreateDirectory(SetDataCache);
+            CreateDirectory(DefaultImageCacheFolder);
         }
 
         private static void CreateDirectory(string path)
@@ -41,11 +42,11 @@ namespace CCGCurator.Data
             }
         }
 
-        public string ImagesFolder
+        public string DefaultImageCacheFolder
         {
             get
             {
-                return @"C:\Users\Logaan\Desktop\mtgtest";
+                return Path.Combine(DataFolder, "ImageCache");
             }
         }
     }

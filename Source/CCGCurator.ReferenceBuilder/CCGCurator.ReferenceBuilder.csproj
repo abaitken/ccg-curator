@@ -63,6 +63,15 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.WindowsAPICodePack-Core.1.1.0.0\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.WindowsAPICodePack-Shell.1.1.0.0\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.ShellExtensions, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.WindowsAPICodePack-Shell.1.1.0.0\lib\Microsoft.WindowsAPICodePack.ShellExtensions.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -93,11 +102,13 @@
     </ApplicationDefinition>
     <Compile Include="AddAction.cs" />
     <Compile Include="CardImageSource.cs" />
+    <Compile Include="EnumerationBooleanValueConverter.cs" />
     <Compile Include="DataAction.cs" />
     <Compile Include="DeleteAction.cs" />
     <Compile Include="DiskImageSource.cs" />
     <Compile Include="DualImageSource.cs" />
     <Compile Include="IDataActionsNotifier.cs" />
+    <Compile Include="ISettings.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="RemoteCardData.cs" />

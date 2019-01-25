@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Data;
 using CCGCurator.Common;
@@ -17,6 +18,12 @@ using Timer = System.Timers.Timer;
 
 namespace CCGCurator.ReferenceBuilder
 {
+    enum ViewModelState
+    {
+        FetchingData,
+        Ready,
+        Processing
+    }
     internal class MainWindowViewModel : ViewModel, IDataActionsNotifier
     {
         private readonly Timer timer;
@@ -32,6 +39,7 @@ namespace CCGCurator.ReferenceBuilder
         private ICollectionView setInfoCollectionView;
         private string filterText;
         private readonly ReferenceBuilderWorker referenceBuilderWorker;
+        private string imageCachePath;
 
         public MainWindowViewModel()
         {
@@ -45,7 +53,19 @@ namespace CCGCurator.ReferenceBuilder
             referenceBuilderWorker = new ReferenceBuilderWorker();
         }
 
-        public bool CanCollectData => !worker.IsBusy;
+        public ViewModelState ViewModelState
+        {
+            get
+            {
+                if (worker.IsBusy)
+                    return ViewModelState.Processing;
+
+                if (sets == null)
+                    return ViewModelState.FetchingData;
+
+                return ViewModelState.Ready;
+            }
+        }
 
         public string StatusText
         {
@@ -55,11 +75,8 @@ namespace CCGCurator.ReferenceBuilder
                     return string.Empty;
 
                 var timeTaken = DateTime.Now - startTime.Value;
-                var averageTimePerSet = TimeSpan.FromTicks((long) ((double) timeTaken.Ticks / ProgressValue));
+                var averageTimePerSet = ProgressValue == 0 ? timeTaken : TimeSpan.FromTicks((long) ((double) timeTaken.Ticks / ProgressValue));
                 var remaining = MaximumValue - ProgressValue;
-                //var estimatedTimeRemaining = TimeSpan.FromTicks(remaining * averageTimePerSet.Ticks);
-                //var remainingPercentage = (double) remaining / MaximumValue;
-                //var estimatedTimeRemaining = TimeSpan.FromTicks((long) (timeTaken.Ticks / remainingPercentage));
 
                 var text = new StringBuilder();
                 text.AppendLine($"{FormatPercentage(ProgressValue, MaximumValue)}");
@@ -69,7 +86,6 @@ namespace CCGCurator.ReferenceBuilder
                 text.AppendLine($"Maximum {MaximumValue}");
                 text.AppendLine($"Remaining {remaining}");
                 text.AppendLine($"Time per set {averageTimePerSet}");
-                //text.AppendLine($"Time remaining {estimatedTimeRemaining}");
                 return text.ToString();
             }
         }
@@ -152,8 +168,9 @@ namespace CCGCurator.ReferenceBuilder
         {
             timer.Stop();
 
+            NotifyPropertyChanged(nameof(StatusText));
             UpdateCurrentSetView();
-            NotifyPropertyChanged(nameof(CanCollectData));
+            NotifyPropertyChanged(nameof(ViewModelState));
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -171,17 +188,17 @@ namespace CCGCurator.ReferenceBuilder
         {
             ProgressValue = 0;
             MaximumValue = PendingActions.Count;
-            referenceBuilderWorker.DoWork(sets, PendingActions);
+            referenceBuilderWorker.DoWork(sets, PendingActions, ImageCachePath);
             ProgressValue = MaximumValue;
         }
 
         internal void CollectData()
         {
-            if (CanCollectData)
+            if (ViewModelState == ViewModelState.Ready)
             {
                 ProgressValue = 0;
                 worker.RunWorkerAsync();
-                NotifyPropertyChanged(nameof(CanCollectData));
+                NotifyPropertyChanged(nameof(ViewModelState));
                 timer.Start();
                 startTime = DateTime.Now;
                 NotifyPropertyChanged(nameof(StatusText));
@@ -193,34 +210,49 @@ namespace CCGCurator.ReferenceBuilder
             if (viewLoaded)
                 return;
             viewLoaded = true;
+
+            ResolveImageCachePath();
             UpdateCurrentSetView();
+        }
+
+        private void ResolveImageCachePath()
+        {
+            var applicationSettings = new ApplicationSettings();
+
+            ImageCachePath =
+                string.IsNullOrWhiteSpace(Settings.ImageCachePath) || !Directory.Exists(Settings.ImageCachePath)
+                    ? applicationSettings.DefaultImageCacheFolder
+                    : Settings.ImageCachePath;
         }
 
         private void UpdateCurrentSetView()
         {
-            var applicationSettings = new ApplicationSettings();
-            var remoteDataFileClient = new RemoteDataFileClient(applicationSettings);
-            var remoteCardData = new RemoteCardData(remoteDataFileClient);
-
-            sets = remoteCardData.GetSets();
-
-            var localCardData = new LocalCardData(applicationSettings.DatabasePath);
-            setsInDatabase = localCardData.GetSets().ToList();
-
-            var setInfo = new List<SetInfo>();
-
-            foreach (var set in sets)
-            {
-                var inDatabase = setsInDatabase.Any(i => i.Code.Equals(set.Code));
-                setInfo.Add(new SetInfo(set, inDatabase, this));
-            }
-
-            SetInfo = setInfo;
-
-            var collectionView = CollectionViewSource.GetDefaultView(SetInfo);
-            collectionView.Filter = SetListBoxFilter;
-            SetInfoCollectionView = collectionView;
             PendingActions.Clear();
+            Task.Run(() =>
+            {
+                var applicationSettings = new ApplicationSettings();
+                var remoteDataFileClient = new RemoteDataFileClient(applicationSettings);
+                var remoteCardData = new RemoteCardData(remoteDataFileClient);
+
+                sets = remoteCardData.GetSets();
+
+                var localCardData = new LocalCardData(applicationSettings.DatabasePath);
+                setsInDatabase = localCardData.GetSets().ToList();
+
+                var setInfo = new List<SetInfo>();
+
+                foreach (var set in sets)
+                {
+                    var inDatabase = setsInDatabase.Any(i => i.Code.Equals(set.Code));
+                    setInfo.Add(new SetInfo(set, inDatabase, this));
+                }
+
+                SetInfo = setInfo;
+                var collectionView = CollectionViewSource.GetDefaultView(SetInfo);
+                collectionView.Filter = SetListBoxFilter;
+                SetInfoCollectionView = collectionView;
+                NotifyPropertyChanged(nameof(ViewModelState));
+            });
         }
 
         private bool SetListBoxFilter(object obj)
@@ -242,6 +274,27 @@ namespace CCGCurator.ReferenceBuilder
         {
             this.filterText = filterText;
             SetInfoCollectionView.Refresh();
+        }
+
+        private ISettings Settings => Properties.Settings.Default;
+
+        public string ImageCachePath
+        {
+            get { return imageCachePath; }
+            set
+            {
+                if(imageCachePath == value)
+                    return;
+
+                imageCachePath = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public void ViewClosing()
+        {
+            Settings.ImageCachePath = ImageCachePath;
+            Settings.Save();
         }
     }
 }
