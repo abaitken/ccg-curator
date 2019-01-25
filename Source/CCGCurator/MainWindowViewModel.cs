@@ -1,48 +1,43 @@
-﻿using CCGCurator.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using CCGCurator.Common;
 using CCGCurator.Data;
 using DirectX.Capture;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Windows.Forms;
 
 namespace CCGCurator
 {
-
-    class MainWindowViewModel : ViewModel
+    internal class MainWindowViewModel : ViewModel
     {
         private static readonly object _locker = new object();
+        private Filters cameraFilters;
+        private Capture capture;
+        private Control captureBox;
+
+        private bool capturing;
+        private CardDetection cardDetection;
+
+        private PictureBox filteredBox;
+        private IEnumerable<ImageFeed> imageFeeds;
+        private PictureBox previewBox;
+        public List<Card> referenceCards = new List<Card>();
         private ImageFeed selectedImageFeed;
         private bool viewLoaded;
-        private PictureBox previewBox;
-        private PictureBox filteredBox;
-        private Filters cameraFilters;
-        private IEnumerable<ImageFeed> imageFeeds;
-        private Capture capture;
-        CardDetection cardDetection;
-        public List<Card> referenceCards = new List<Card>();
-        Control captureBox;
 
-        internal void Closing()
+        public MainWindowViewModel()
         {
-            StopCapturing();
-
-            Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
-            Settings.Save();
+            DetectedCards = new ObservableCollection<Card>();
         }
 
-        private ISettings Settings
-        {
-            get { return Properties.Settings.Default; }
-        }
+        private ISettings Settings => Properties.Settings.Default;
 
         public IEnumerable<ImageFeed> ImageFeeds
         {
-            get
-            {
-                return imageFeeds;
-            }
+            get => imageFeeds;
             set
             {
                 imageFeeds = value;
@@ -50,19 +45,27 @@ namespace CCGCurator
             }
         }
 
-        public Card DetectedCard
+        public ImageFeed SelectedImageFeed
         {
-            get { return detectedCard; }
+            get => selectedImageFeed;
             set
             {
-                if (detectedCard == value)
+                if (selectedImageFeed == value)
                     return;
-
-                if (detectedCard == null)
-                    return;
-                detectedCard = value;
+                selectedImageFeed = value;
                 NotifyPropertyChanged();
+                StartCapturing();
             }
+        }
+
+        public ObservableCollection<Card> DetectedCards { get; }
+
+        internal void Closing()
+        {
+            StopCapturing();
+
+            Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
+            Settings.Save();
         }
 
         internal void ViewLoaded(PictureBox previewBox, PictureBox filteredBox)
@@ -73,14 +76,12 @@ namespace CCGCurator
             viewLoaded = true;
             this.previewBox = previewBox;
             this.filteredBox = filteredBox;
-            this.captureBox = new PictureBox();
+            captureBox = new PictureBox();
             LoadSourceCards();
             cameraFilters = new Filters();
             var imageFeeds = new List<ImageFeed>();
-            for (int i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
-            {
+            for (var i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
                 imageFeeds.Add(new ImageFeed(cameraFilters.VideoInputDevices[i].Name, i));
-            }
             ImageFeeds = imageFeeds;
 
             var previousIndex = Settings.WebcamIndex;
@@ -88,19 +89,6 @@ namespace CCGCurator
                 previousIndex = 0;
 
             SelectedImageFeed = imageFeeds[previousIndex];
-        }
-
-        public ImageFeed SelectedImageFeed
-        {
-            get { return selectedImageFeed; }
-            set
-            {
-                if (selectedImageFeed == value)
-                    return;
-                selectedImageFeed = value;
-                NotifyPropertyChanged();
-                ImageFeedHasChanged();
-            }
         }
 
         private Size CalculateCaptureFrameSize(Size maxSize)
@@ -114,6 +102,7 @@ namespace CCGCurator
 
         private void StopCapturing()
         {
+            capturing = false;
             if (capture != null)
             {
                 capture.Stop();
@@ -123,45 +112,57 @@ namespace CCGCurator
                 capture = null;
                 cardDetection = null;
             }
-
         }
 
-        private void ImageFeedHasChanged()
+        private void StartCapturing()
         {
             StopCapturing();
             if (SelectedImageFeed == null)
                 return;
-            capture = new Capture(cameraFilters.VideoInputDevices[SelectedImageFeed.FilterIndex], cameraFilters.AudioInputDevices[0]);
+            capture = new Capture(cameraFilters.VideoInputDevices[SelectedImageFeed.FilterIndex],
+                cameraFilters.AudioInputDevices[0]);
             if (capture.VideoCaps == null)
                 return;
             capture.FrameSize = CalculateCaptureFrameSize(capture.VideoCaps.MaxFrameSize);
 
             var fScaleFactor = Convert.ToDouble(capture.FrameSize.Height) / 480;
-            cardDetection = new CardDetection(fScaleFactor, referenceCards);
+            cardDetection = new CardDetection(fScaleFactor);
             capture.PreviewWindow = captureBox;
             capture.FrameEvent2 += CaptureDone;
             capture.GrapImg();
+            capturing = true;
         }
 
         private void CaptureDone(Bitmap captured)
         {
+            if (cardDetection == null || !capturing)
+                return;
+
+            List<Card> detectedCards;
+
             lock (_locker)
             {
-                Bitmap filtered;
-                Bitmap preview;
-                cardDetection.Process(captured, out filtered, out preview);
+                detectedCards = cardDetection.Process(captured, out var filtered, out var preview, referenceCards);
                 filteredBox.Image = filtered;
                 previewBox.Image = preview;
             }
+
+            if (detectedCards.Any())
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var detectedCard in detectedCards)
+                        if (!DetectedCards.Contains(detectedCard))
+                            DetectedCards.Add(detectedCard);
+                });
         }
 
         private void LoadSourceCards()
         {
-            var localCardData = new LocalCardData(new Data.ApplicationSettings().DatabasePath);
-            referenceCards = new List<Card>(localCardData.GetCardsWithHashes());
+            Task.Run(() =>
+            {
+                var localCardData = new LocalCardData(new ApplicationSettings().DatabasePath);
+                referenceCards = new List<Card>(localCardData.GetCardsWithHashes());
+            });
         }
-
-        private Card detectedCard;
-       
     }
 }

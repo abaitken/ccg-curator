@@ -4,13 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CCGCurator"
+        xmlns:data="clr-namespace:CCGCurator.Data;assembly=CCGCurator.Data"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="3*"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
         <!-- ROW 0 -->
@@ -29,8 +30,12 @@
         </UniformGrid>
 
         <!-- ROW 2 -->
-        <StackPanel DataContext="{Binding DetectedCard}" Grid.Row="2">
-            <TextBlock Text="{Binding Name}" />
-        </StackPanel>      
-    </Grid>
+        <ListBox ItemsSource="{Binding DetectedCards}" Grid.Row="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type data:Card}">
+                    <TextBlock Text="{Binding Name}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+</Grid>
 </Window>

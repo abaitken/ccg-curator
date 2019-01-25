@@ -16,14 +16,10 @@ namespace CCGCurator
     internal class CardDetection
     {
         private readonly double scaleFactor;
-        private readonly pHash phash;
-        private readonly List<Card> referenceCards;
 
-        public CardDetection(double scaleFactor, List<Card> referenceCards)
+        public CardDetection(double scaleFactor)
         {
-            phash = new pHash();
             this.scaleFactor = scaleFactor;
-            this.referenceCards = referenceCards;
         }
 
         public double BlobHeight { get; set; } = 225;
@@ -186,10 +182,12 @@ namespace CCGCurator
             return result;
         }
 
-        private Card FindBestMatch(ulong needle)
+        private Card FindBestMatch(ulong needle, List<Card> referenceCards)
         {
             Card bestMatch = null;
             var lowestHamming = int.MaxValue;
+
+            var phash = new pHash();
 
             foreach (var referenceCard in referenceCards)
             {
@@ -204,13 +202,14 @@ namespace CCGCurator
             return bestMatch;
         }
 
-        private List<Tuple<DetectedCard, Card>> MatchCards(List<DetectedCard> detections)
+        private List<Tuple<DetectedCard, Card>> MatchCards(List<DetectedCard> detections, List<Card> referenceCards)
         {
+            var phash = new pHash();
             var matchedCards = new List<Tuple<DetectedCard, Card>>();
             foreach (var detectedCard in detections)
             {
                 var cardHash = phash.ImageHash(detectedCard.cardBitmap);
-                var bestMatch = FindBestMatch(cardHash);
+                var bestMatch = FindBestMatch(cardHash, referenceCards);
 
                 if (bestMatch != null)
                 {
@@ -235,11 +234,16 @@ namespace CCGCurator
             return matchedCards;
         }
 
-        public void Process(Bitmap captured, out Bitmap greyscaleDetectionImage, out Bitmap previewImage)
+        public List<Card> Process(Bitmap captured, out Bitmap greyscaleDetectionImage, out Bitmap previewImage, List<Card> referenceCards)
         {
             var cards = DetectCards(captured, out greyscaleDetectionImage);
-            var matchedCards = MatchCards(cards);
+            var matchedCards = MatchCards(cards, referenceCards);
             previewImage = CreatePreviewImage(matchedCards, captured);
+
+            var result = from item in matchedCards
+                select item.Item2;
+
+            return result.ToList();
         }
 
         private Bitmap CreatePreviewImage(List<Tuple<DetectedCard, Card>> matches, Bitmap captured)
