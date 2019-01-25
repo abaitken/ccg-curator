@@ -92,5 +92,26 @@ namespace CCGCurator.Data
                 yield return new Card(reader.GetString(0), reader.GetInt32(1), reader.GetString(2), ulong.Parse(reader.GetString(3)));
             }
         }
+
+        public IEnumerable<Set> GetSets()
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT setid, name, code FROM sets;";
+            var reader = command.ExecuteReader();
+            if (!reader.HasRows)
+                yield break;
+
+            while (reader.Read())
+            {
+                yield return new Set(reader.GetString(2), reader.GetString(1), reader.GetInt32(0));
+            }
+        }
+
+        public void DeleteSetAndAssociatedCards(Set set)
+        {
+            var setId = ExecuteScalarValueQuery<long>($"SELECT setid FROM sets WHERE code ='{set.Code}' LIMIT 1;");
+            ExecuteNonQuery($"DELETE FROM sets WHERE setid = {setId};");
+            ExecuteNonQuery($"DELETE FROM cards WHERE setid = {setId};");
+        }
     }
 }

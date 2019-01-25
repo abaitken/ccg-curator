@@ -7,23 +7,62 @@
         mc:Ignorable="d"        
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <Grid.Style>
+            <Style TargetType="FrameworkElement">
+                <Setter Property="Margin" Value="2,2,2,2"/>
+            </Style>
+        </Grid.Style>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="23" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="10*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        
+
         <!-- Row 0 -->
-        <!--<TextBox IsReadOnly="true" VerticalScrollBarVisibility="Visible" />-->
-        <ProgressBar Value="{Binding ProgressValue}" Maximum="{Binding MaximumValue}" />
+
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Content="Clear" Click="ClearButton_OnClick"/>
+            <TextBox x:Name="SearchTextBox" TextChanged="SearchTextBox_OnTextChanged" Grid.Column="1"/>
+        </Grid>
 
         <!-- Row 1 -->
-        <Button Content="Collect Data" Click="CollectData_Click" Grid.Row="1" IsEnabled="{Binding CanCollectData}" />
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ListBox x:Name="SetListBox" ItemsSource="{Binding SetInfoCollectionView}" Grid.Column="0" IsEnabled="{Binding CanCollectData}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type local:SetInfo}">
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding InDatabase}"></CheckBox>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
+            <ListBox ItemsSource="{Binding PendingActions}" Grid.Column="1"/>
+        </Grid>
         <!-- Row 2 -->
-        <Label Content="{Binding StatusText}" Grid.Row="2" />
+        <ProgressBar Value="{Binding ProgressValue}" Maximum="{Binding MaximumValue}" Grid.Row="2" />
+
+        <!-- Row 3 -->
+        <Button Content="Update" Click="CollectData_Click" Grid.Row="3" IsEnabled="{Binding CanCollectData}" />
+
+        <!-- Row 4 -->
+        <Label Content="{Binding StatusText}" Grid.Row="4" />
     </Grid>
 </Window>

@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace CCGCurator.ReferenceBuilder
 {
@@ -10,7 +12,13 @@ namespace CCGCurator.ReferenceBuilder
         public MainWindow()
         {
             ViewModel = new MainWindowViewModel();
+            Loaded += MainWindow_Loaded;
             InitializeComponent();
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ViewLoaded();
         }
 
         private MainWindowViewModel ViewModel
@@ -22,6 +30,16 @@ namespace CCGCurator.ReferenceBuilder
         private void CollectData_Click(object sender, RoutedEventArgs e)
         {
             ViewModel.CollectData();
+        }
+
+        private void SearchTextBox_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            ViewModel.UpdateFilter(SearchTextBox.Text);
+        }
+
+        private void ClearButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            SearchTextBox.Text = string.Empty;
         }
     }
 }

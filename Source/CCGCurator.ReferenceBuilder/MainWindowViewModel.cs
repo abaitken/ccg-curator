@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
+using System.Windows.Data;
 using CCGCurator.Common;
 using CCGCurator.Data;
 using Newtonsoft.Json;
@@ -16,13 +17,21 @@ using Timer = System.Timers.Timer;
 
 namespace CCGCurator.ReferenceBuilder
 {
-    internal class MainWindowViewModel : ViewModel
+    internal class MainWindowViewModel : ViewModel, IDataActionsNotifier
     {
         private readonly Timer timer;
         private readonly BackgroundWorker worker;
+        private ObservableCollection<DataAction> pendingActions = new ObservableCollection<DataAction>();
         private int maximumValue = 1;
         private int progressValue;
+        private IList<SetInfo> setInfo = new List<SetInfo>();
         private DateTime? startTime;
+        private bool viewLoaded;
+        private IList<Set> sets;
+        private List<Set> setsInDatabase;
+        private ICollectionView setInfoCollectionView;
+        private string filterText;
+        private readonly ReferenceBuilderWorker referenceBuilderWorker;
 
         public MainWindowViewModel()
         {
@@ -33,6 +42,7 @@ namespace CCGCurator.ReferenceBuilder
             timer = new Timer(200);
             timer.Elapsed += Timer_Elapsed;
             timer.Stop();
+            referenceBuilderWorker = new ReferenceBuilderWorker();
         }
 
         public bool CanCollectData => !worker.IsBusy;
@@ -45,11 +55,11 @@ namespace CCGCurator.ReferenceBuilder
                     return string.Empty;
 
                 var timeTaken = DateTime.Now - startTime.Value;
-                var averageTimePerSet = TimeSpan.FromTicks((long)((double)timeTaken.Ticks / ProgressValue));
+                var averageTimePerSet = TimeSpan.FromTicks((long) ((double) timeTaken.Ticks / ProgressValue));
                 var remaining = MaximumValue - ProgressValue;
                 //var estimatedTimeRemaining = TimeSpan.FromTicks(remaining * averageTimePerSet.Ticks);
-                var remainingPercentage = (double)remaining / MaximumValue;
-                var estimatedTimeRemaining = TimeSpan.FromTicks((long)(timeTaken.Ticks / remainingPercentage));
+                //var remainingPercentage = (double) remaining / MaximumValue;
+                //var estimatedTimeRemaining = TimeSpan.FromTicks((long) (timeTaken.Ticks / remainingPercentage));
 
                 var text = new StringBuilder();
                 text.AppendLine($"{FormatPercentage(ProgressValue, MaximumValue)}");
@@ -59,8 +69,28 @@ namespace CCGCurator.ReferenceBuilder
                 text.AppendLine($"Maximum {MaximumValue}");
                 text.AppendLine($"Remaining {remaining}");
                 text.AppendLine($"Time per set {averageTimePerSet}");
-                text.AppendLine($"Time remaining {estimatedTimeRemaining}");
+                //text.AppendLine($"Time remaining {estimatedTimeRemaining}");
                 return text.ToString();
+            }
+        }
+
+        public IList<SetInfo> SetInfo
+        {
+            get => setInfo;
+            set
+            {
+                setInfo = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public ICollectionView SetInfoCollectionView
+        {
+            get => setInfoCollectionView;
+            set
+            {
+                setInfoCollectionView = value;
+                NotifyPropertyChanged();
             }
         }
 
@@ -90,17 +120,45 @@ namespace CCGCurator.ReferenceBuilder
             }
         }
 
+        public ObservableCollection<DataAction> PendingActions
+        {
+            get => pendingActions;
+            set
+            {
+                if (pendingActions == value)
+                    return;
+                pendingActions = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public void Update(Set set, bool include)
+        {
+            var actionInstance = PendingActions.FirstOrDefault(i => i.Set.Code.Equals(set.Code));
+            PendingActions.Remove(actionInstance);
+
+            var databaseContainsSet = setsInDatabase.FirstOrDefault(i => i.Code.Equals(set.Code)) != null;
+            if (databaseContainsSet && !include)
+            {
+                PendingActions.Add(new DeleteAction(set));
+            }
+            if (!databaseContainsSet && include)
+            {
+                PendingActions.Add(new AddAction(set));
+            }
+        }
+
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             timer.Stop();
-            ProgressValue = 0;
 
+            UpdateCurrentSetView();
             NotifyPropertyChanged(nameof(CanCollectData));
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            NotifyPropertyChanged(nameof(ProgressValue));
+            ProgressValue = referenceBuilderWorker.CurrentItem;
             NotifyPropertyChanged(nameof(StatusText));
         }
 
@@ -111,77 +169,9 @@ namespace CCGCurator.ReferenceBuilder
 
         private void Worker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var applicationSettings = new ApplicationSettings();
-
-            if (File.Exists(applicationSettings.DatabasePath))
-                File.Delete(applicationSettings.DatabasePath);
-
-            var localCardData = new LocalCardData(applicationSettings.DatabasePath);
-            var remoteDataFileClient = new RemoteDataFileClient(applicationSettings);
-            var remoteCardData = new RemoteCardData(remoteDataFileClient);
-
-            var sets = remoteCardData.GetSets();
-
-            MaximumValue = sets.Count;
-
-            var imageSource = new DualImageSource(applicationSettings.ImagesFolder);
-
-            var logFileName = "collection.log";
-            if (File.Exists(logFileName))
-                File.Delete(logFileName);
-            var logger = new Logging(logFileName);
-
-            Synchronous.ForEach(sets, set =>
-            {
-                try
-                {
-                    var cards = remoteCardData.GetCards(set);
-                    localCardData.AddSet(set);
-
-                    Synchronous.ForEach(cards, card =>
-                    {
-                        try
-                        {
-                            var image = imageSource.GetImage(card, set);
-
-                            var imageHashing = new pHash();
-                            if (image != null) card.pHash = imageHashing.ImageHash(image);
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.WriteLine($"CARD={card.Name};SET={set.Code};EXCEPTION={ex.GetType()},{ex.Message}");
-                        }
-
-                        try
-                        {
-                            localCardData.AddCard(card, set);
-                        }
-                        catch (SQLiteException e4)
-                        {
-                            logger.WriteLine(
-                                $"CARD={card.MultiverseId},{card.Name};SET={set.Code},{set.Name};EXCEPTION={e4.GetType()},{e4.Message}");
-                        }
-                    });
-                }
-                catch (JsonReaderException e1)
-                {
-                    logger.WriteLine($"SET={set.Code},{set.Name};EXCEPTION={e1.GetType()},{e1.Message}");
-                }
-                catch (WebException e2)
-                {
-                    logger.WriteLine($"SET={set.Code},{set.Name};EXCEPTION={e2.GetType()},{e2.Message}");
-                }
-                catch (SQLiteException e3)
-                {
-                    logger.WriteLine($"SET={set.Code},{set.Name};EXCEPTION={e3.GetType()},{e3.Message}");
-                }
-                finally
-                {
-                    Interlocked.Increment(ref progressValue);
-                }
-            });
-            logger.Close();
-            localCardData.Close();
+            ProgressValue = 0;
+            MaximumValue = PendingActions.Count;
+            referenceBuilderWorker.DoWork(sets, PendingActions);
             ProgressValue = MaximumValue;
         }
 
@@ -196,6 +186,62 @@ namespace CCGCurator.ReferenceBuilder
                 startTime = DateTime.Now;
                 NotifyPropertyChanged(nameof(StatusText));
             }
+        }
+
+        public void ViewLoaded()
+        {
+            if (viewLoaded)
+                return;
+            viewLoaded = true;
+            UpdateCurrentSetView();
+        }
+
+        private void UpdateCurrentSetView()
+        {
+            var applicationSettings = new ApplicationSettings();
+            var remoteDataFileClient = new RemoteDataFileClient(applicationSettings);
+            var remoteCardData = new RemoteCardData(remoteDataFileClient);
+
+            sets = remoteCardData.GetSets();
+
+            var localCardData = new LocalCardData(applicationSettings.DatabasePath);
+            setsInDatabase = localCardData.GetSets().ToList();
+
+            var setInfo = new List<SetInfo>();
+
+            foreach (var set in sets)
+            {
+                var inDatabase = setsInDatabase.Any(i => i.Code.Equals(set.Code));
+                setInfo.Add(new SetInfo(set, inDatabase, this));
+            }
+
+            SetInfo = setInfo;
+
+            var collectionView = CollectionViewSource.GetDefaultView(SetInfo);
+            collectionView.Filter = SetListBoxFilter;
+            SetInfoCollectionView = collectionView;
+            PendingActions.Clear();
+        }
+
+        private bool SetListBoxFilter(object obj)
+        {
+            if (string.IsNullOrEmpty(filterText))
+            {
+                return true;
+            }
+
+            var value = obj as SetInfo;
+
+            if (value == null)
+                return false;
+
+            return value.Name.Contains(filterText);
+        }
+
+        public void UpdateFilter(string filterText)
+        {
+            this.filterText = filterText;
+            SetInfoCollectionView.Refresh();
         }
     }
 }

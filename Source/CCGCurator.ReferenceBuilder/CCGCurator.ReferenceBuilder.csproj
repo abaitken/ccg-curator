@@ -91,14 +91,20 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AddAction.cs" />
     <Compile Include="CardImageSource.cs" />
+    <Compile Include="DataAction.cs" />
+    <Compile Include="DeleteAction.cs" />
     <Compile Include="DiskImageSource.cs" />
     <Compile Include="DualImageSource.cs" />
+    <Compile Include="IDataActionsNotifier.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="RemoteCardData.cs" />
+    <Compile Include="SetInfo.cs" />
     <Compile Include="Synchronous.cs" />
     <Compile Include="WebImageSource.cs" />
+    <Compile Include="ReferenceBuilderWorker.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

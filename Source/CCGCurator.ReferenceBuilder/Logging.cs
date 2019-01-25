@@ -5,8 +5,11 @@ namespace CCGCurator.ReferenceBuilder
     class Logging
     {
         private readonly StreamWriter writer;
-        public Logging(string logFileName)
+        public Logging()
         {
+            var logFileName = "collection.log";
+            if (File.Exists(logFileName))
+                File.Delete(logFileName);
             writer = new StreamWriter(logFileName);
         }
 
