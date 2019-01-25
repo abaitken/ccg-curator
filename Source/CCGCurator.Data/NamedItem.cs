@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace CCGCurator.Data
 {
+    [DebuggerDisplay("{Name}")]
     public abstract class NamedItem
     {
         protected NamedItem(string name)

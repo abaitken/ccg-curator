@@ -160,7 +160,7 @@ namespace CCGCurator
         {
             Task.Run(() =>
             {
-                var localCardData = new LocalCardData(new ApplicationSettings().DatabasePath);
+                var localCardData = new LocalCardData(new ApplicationSettings().CardDataPath);
                 referenceCards = new List<Card>(localCardData.GetCardsWithHashes());
             });
         }

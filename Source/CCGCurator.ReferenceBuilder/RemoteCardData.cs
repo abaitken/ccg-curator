@@ -99,7 +99,7 @@ namespace CCGCurator.ReferenceBuilder
                         var name = card["name"].ToString();
                         var uuid = card["uuid"].ToString();
                         var multiverseId = int.Parse(card["multiverseId"].ToString());
-                        cards.Add(new Card(name, multiverseId, uuid));
+                        cards.Add(new Card(name, multiverseId, uuid, set));
                     }
                 }
             }

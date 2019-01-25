@@ -13,7 +13,7 @@ namespace CCGCurator.ReferenceBuilder
         {
             var applicationSettings = new ApplicationSettings();
 
-            var localCardData = new LocalCardData(applicationSettings.DatabasePath);
+            var localCardData = new LocalCardData(applicationSettings.CardDataPath);
             var remoteCardData = new RemoteCardData(new RemoteDataFileClient(applicationSettings));
             
             var imageSource = new DualImageSource(imageCacheFolder);

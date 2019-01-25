@@ -6,98 +6,54 @@ using System.Linq;
 
 namespace CCGCurator.Data
 {
-    public sealed class LocalCardData
+    public sealed class LocalCardData : SQLiteData
     {
-        private static readonly long version = 1;
-
-        private readonly SQLiteConnection connection;
         public LocalCardData(string databaseFilePath)
+            : base(databaseFilePath)
         {
-            var exists = File.Exists(databaseFilePath);
-
-            connection = new SQLiteConnection("Data Source=" + databaseFilePath + ";Version=3;");
-            connection.Open();
-
-            if (!exists)
-                InitializeDatabase();
-
-            CheckVersion();
         }
 
-        public void Close()
-        {
-            connection.Close();
-        }
+        protected override int Version => 1;
 
-        private void CheckVersion()
-        {
-            var dbVersion = ExecuteScalarValueQuery<long>($"SELECT version FROM version LIMIT 1;");
-
-            if (dbVersion != version)
-                throw new InvalidOperationException($"Local Card Database is version '{dbVersion}', expected version '{version}'");
-        }
-
-        private T ExecuteScalarValueQuery<T>(string sqlQuery)
-        {
-            var command = connection.CreateCommand();
-            command.CommandText = sqlQuery;
-            var result = command.ExecuteScalar();
-
-            return (T)result;
-        }
-
-        private void InitializeDatabase()
+        protected override void InitializeDatabase()
         {
             ExecuteNonQuery("CREATE TABLE sets(setid integer NOT NULL, name varchar(255), code varchar(10), PRIMARY KEY(setid));");
             ExecuteNonQuery("CREATE TABLE cards(multiverseid integer NOT NULL, name varchar(255), phash varchar(255), setid integer NOT NULL, uuid varchar(50) NOT NULL, PRIMARY KEY(uuid));");
-            ExecuteNonQuery("CREATE TABLE version(version integer NOT NULL, PRIMARY KEY(version));");
-            ExecuteNonQuery($"INSERT INTO version (version) values ({version});");
         }
-
-        private void ExecuteNonQuery(string sqlQuery)
-        {
-            var command = connection.CreateCommand();
-            command.CommandText = sqlQuery;
-            command.ExecuteNonQuery();
-        }
-
-        private string EscapeString(string original)
-        {
-            if (string.IsNullOrEmpty(original))
-                return original;
-
-            return original.Replace("'", "''");
-        }
-
+        
         public void AddSet(Set set)
         {
             ExecuteNonQuery($"INSERT INTO sets (setid, name, code) values ({set.SetId}, '{EscapeString(set.Name)}', '{EscapeString(set.Code)}');");
         }
 
-        public void AddCard(Card card, Set set)
+        public void AddCard(Card card)
         {
+            var set = card.Set;
             ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid, uuid) values ({card.MultiverseId}, '{EscapeString(card.Name)}', '{card.pHash.ToString()}', {set.SetId}, '{EscapeString(card.UUID)}');");
         }
 
         public IEnumerable<Card> GetCardsWithHashes()
         {
-            var command = connection.CreateCommand();
-            command.CommandText = "SELECT name, multiverseid, uuid, phash FROM cards WHERE phash != '0';";
-            var reader = command.ExecuteReader();
+            var reader = ExecuteReader("SELECT c.name, c.multiverseid, c.uuid, c.phash, s.name, s.code, s.setid FROM cards AS c INNER JOIN sets AS s ON c.setid = s.setid WHERE phash != '0';");
             if (!reader.HasRows)
                 yield break;
 
             while(reader.Read())
             {
-                yield return new Card(reader.GetString(0), reader.GetInt32(1), reader.GetString(2), ulong.Parse(reader.GetString(3)));
+                var cardName = reader.GetString(0);
+                var multiverseId = reader.GetInt32(1);
+                var uuid = reader.GetString(2);
+                var phash = ulong.Parse(reader.GetString(3));
+                var setName = reader.GetString(4);
+                var setCode = reader.GetString(5);
+                var setId = reader.GetInt32(6);
+                yield return new Card(cardName, multiverseId, uuid, phash, new Set(setCode, setName, setId));
             }
         }
 
         public IEnumerable<Set> GetSets()
         {
-            var command = connection.CreateCommand();
-            command.CommandText = "SELECT setid, name, code FROM sets;";
-            var reader = command.ExecuteReader();
+            var reader = ExecuteReader("SELECT setid, name, code FROM sets;");
             if (!reader.HasRows)
                 yield break;
 

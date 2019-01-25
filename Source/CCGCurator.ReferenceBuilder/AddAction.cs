@@ -42,7 +42,7 @@ namespace CCGCurator.ReferenceBuilder
 
                     try
                     {
-                        localCardData.AddCard(card, Set);
+                        localCardData.AddCard(card);
                     }
                     catch (SQLiteException e4)
                     {

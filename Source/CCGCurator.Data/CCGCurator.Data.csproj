@@ -69,10 +69,12 @@
     </Compile>
     <Compile Include="ApplicationSettings.cs" />
     <Compile Include="Card.cs" />
+    <Compile Include="CardCatalog.cs" />
     <Compile Include="LocalCardData.cs" />
     <Compile Include="NamedItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Set.cs" />
+    <Compile Include="SQLiteData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\KeyPair\CCGCurator.snk">

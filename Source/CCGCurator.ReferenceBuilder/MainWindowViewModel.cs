@@ -236,7 +236,7 @@ namespace CCGCurator.ReferenceBuilder
 
                 sets = remoteCardData.GetSets();
 
-                var localCardData = new LocalCardData(applicationSettings.DatabasePath);
+                var localCardData = new LocalCardData(applicationSettings.CardDataPath);
                 setsInDatabase = localCardData.GetSets().ToList();
 
                 var setInfo = new List<SetInfo>();
