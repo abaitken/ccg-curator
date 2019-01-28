@@ -22,7 +22,7 @@ namespace CCGCurator
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            ViewModel.ViewLoaded();
+            ViewModel.ViewLoaded(this);
         }
 
         internal MainWindowViewModel ViewModel

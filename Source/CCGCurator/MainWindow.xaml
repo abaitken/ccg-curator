@@ -12,34 +12,34 @@
     <Window.Resources>
         <local:BitmapValueConverter x:Key="BitmapValueConverter"/>
         <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
+
+        <Style TargetType="FrameworkElement">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Image">
+            <Setter Property="Margin" Value="4" />
+        </Style>
     </Window.Resources>
     <Grid IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}">
-        <Grid.Resources>
-            <Style TargetType="FrameworkElement">
-                <Setter Property="Margin" Value="2" />
-            </Style>
-            <Style TargetType="Button">
-                <Setter Property="Margin" Value="2" />
-            </Style>
-            <Style TargetType="TextBox">
-                <Setter Property="Margin" Value="2" />
-            </Style>
-            <Style TargetType="ListBox">
-                <Setter Property="Margin" Value="2" />
-            </Style>
-            <Style TargetType="ComboBox">
-                <Setter Property="Margin" Value="2" />
-            </Style>
-            <Style TargetType="Image">
-                <Setter Property="Margin" Value="2" />
-            </Style>
-        </Grid.Resources>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="3*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <!-- COL 0 -->
         <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}"/>
+
         <!-- COL 1 -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
@@ -47,6 +47,7 @@
                 <RowDefinition Height="3*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- ROW 0 -->
@@ -84,6 +85,17 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
+            <!-- ROW 4 -->
+            <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+                <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
+                <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
+            </Grid>
         </Grid>
     </Grid>
 </Window>

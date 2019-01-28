@@ -1,28 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Forms;
+using System.Windows.Input;
 using CCGCurator.Common;
 using CCGCurator.Data;
 using DirectX.Capture;
 using Application = System.Windows.Application;
+using Size = System.Drawing.Size;
 
 namespace CCGCurator
 {
     internal class MainWindowViewModel : ViewModel
     {
-        private static readonly object _locker = new object();
+        private static readonly object captureThreadLocker = new object();
         private Filters cameraFilters;
         private Capture capture;
         private Control captureBox;
 
         private bool capturing;
         private CardDetection cardDetection;
+
+
+        private IDictionary<string, ICommand> commands;
 
 
         private ICollectionView detectedCardsView;
@@ -49,7 +54,7 @@ namespace CCGCurator
 
         public MainWindowViewModel()
         {
-            DetectedCards = new ObservableCollection<DetectedCard>();
+            DetectedCards = new List<DetectedCard>();
         }
 
         private ISettings Settings => Properties.Settings.Default;
@@ -103,7 +108,7 @@ namespace CCGCurator
             }
         }
 
-        public ObservableCollection<DetectedCard> DetectedCards { get; }
+        private List<DetectedCard> DetectedCards { get; set; }
 
         public Bitmap PreviewImage
         {
@@ -157,6 +162,19 @@ namespace CCGCurator
             }
         }
 
+        public IDictionary<string, ICommand> Commands
+        {
+            get => commands;
+            set
+            {
+                if (commands == value)
+                    return;
+
+                commands = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         internal void Closing()
         {
             StopCapturing();
@@ -165,17 +183,19 @@ namespace CCGCurator
             Settings.Save();
         }
 
-        internal void ViewLoaded()
+        internal void ViewLoaded(Window window)
         {
             if (viewLoaded)
                 return;
 
             viewLoaded = true;
 
+            Task.Run(() => { LoadData(); });
+            Task.Run(() => { RecreateDetectedCardsView(); });
+
             Task.Run(() =>
             {
                 captureBox = new PictureBox();
-                LoadData();
                 cameraFilters = new Filters();
                 var imageFeeds = new List<ImageFeed>();
                 for (var i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
@@ -187,12 +207,44 @@ namespace CCGCurator
                     previousIndex = 0;
 
                 SelectedImageFeed = imageFeeds[previousIndex];
-                var collectionView = CollectionViewSource.GetDefaultView(DetectedCards);
-                collectionView.SortDescriptions.Add(new SortDescription(DetectedCard.OccurrencesPropertyName,
-                    ListSortDirection.Descending));
-                DetectedCardsView = collectionView;
                 ViewModelState = ViewModelState.Ready;
             });
+            SetupBindings(window);
+        }
+
+        private void RecreateDetectedCardsView()
+        {
+            var collectionView = CollectionViewSource.GetDefaultView(DetectedCards);
+            collectionView.SortDescriptions.Add(new SortDescription(DetectedCard.OccurrencesPropertyName,
+                ListSortDirection.Descending));
+            DetectedCardsView = collectionView;
+        }
+
+
+        private void SetupBindings(Window window)
+        {
+            var commands = new[]
+            {
+                new ActionCommand("Clear", OnClear, new KeyGesture(Key.C, ModifierKeys.Control)),
+                new ActionCommand("Add", OnAdd, new KeyGesture(Key.A, ModifierKeys.Control))
+            };
+            Commands = commands.ToDictionary(k => k.Key, v => v.Command);
+
+            foreach (var command in commands)
+            {
+                window.InputBindings.Add(command.CreateInputBinding());
+                window.CommandBindings.Add(command.CreateCommandBinding());
+            }
+        }
+
+        private void OnAdd()
+        {
+        }
+
+        private void OnClear()
+        {
+            DetectedCards = new List<DetectedCard>();
+            RecreateDetectedCardsView();
         }
 
         private Size CalculateCaptureFrameSize(Size maxSize)
@@ -252,7 +304,7 @@ namespace CCGCurator
 
             List<Card> detectedCards;
 
-            lock (_locker)
+            lock (captureThreadLocker)
             {
                 var fromSet = SelectedSetFilter ?? SetFilter.All;
                 detectedCards =

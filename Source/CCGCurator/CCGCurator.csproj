@@ -98,6 +98,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ActionCommand.cs" />
     <Compile Include="BitmapValueConverter.cs" />
     <Compile Include="DetectedCard.cs" />
     <Compile Include="ImageExtensions.cs" />
