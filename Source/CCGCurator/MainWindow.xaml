@@ -8,48 +8,77 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="3*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        
-        <!-- ROW 0 -->
-        <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top" SelectedItem="{Binding SelectedImageFeed}" Grid.Row="0">
-            <ComboBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Name}" />
-                </DataTemplate>
-            </ComboBox.ItemTemplate>
-        </ComboBox>
-        
-        <!-- ROW 1 -->
-        <UniformGrid Grid.Row="1" Columns="2">
-            <local:PictureBoxHost x:Name="previewBox" DockPanel.Dock="Left" />
-            <local:PictureBoxHost x:Name="filteredBox" DockPanel.Dock="Right"/>
-        </UniformGrid>
+        <Grid.Resources>
+            <Style TargetType="FrameworkElement">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+            <Style TargetType="ListBox">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+            <Style TargetType="ComboBox">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+            <Style TargetType="local:PictureBoxHost">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+        </Grid.Resources>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <!-- COL 0 -->
+        <local:PictureBoxHost x:Name="previewBox" DockPanel.Dock="Left" />
+        <!-- COL 1 -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- ROW 2 -->
-        <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}" Grid.Row="2">
-            <ComboBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type local:SetFilter}">
-                    <TextBlock Text="{Binding Name}"/>
-                </DataTemplate>
-            </ComboBox.ItemTemplate>
-        </ComboBox>
+            <!-- ROW 0 -->
+            <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top"
+                      SelectedItem="{Binding SelectedImageFeed}"
+                      Grid.Row="0">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
 
-        <!-- ROW 3 -->
-        <ListBox ItemsSource="{Binding DetectedCards}" Grid.Row="3">
-            <ListBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type data:Card}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}"/>
-                        <TextBlock Text=","/>
-                        <TextBlock Text="{Binding Set.Name}"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-</Grid>
+            <!-- ROW 1 -->
+
+            <local:PictureBoxHost x:Name="filteredBox" DockPanel.Dock="Right" Grid.Row="1"/>
+
+            <!-- ROW 2 -->
+            <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}" Grid.Row="2">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type local:SetFilter}">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <!-- ROW 3 -->
+            <ListBox ItemsSource="{Binding DetectedCards}" Grid.Row="3">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type data:Card}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text="," />
+                            <TextBlock Text="{Binding Set.Name}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </Grid>
 </Window>
