@@ -7,6 +7,9 @@
         xmlns:data="clr-namespace:CCGCurator.Data;assembly=CCGCurator.Data"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <local:BitmapValueConverter x:Key="BitmapValueConverter"/>
+    </Window.Resources>
     <Grid>
         <Grid.Resources>
             <Style TargetType="FrameworkElement">
@@ -24,7 +27,7 @@
             <Style TargetType="ComboBox">
                 <Setter Property="Margin" Value="2" />
             </Style>
-            <Style TargetType="local:PictureBoxHost">
+            <Style TargetType="Image">
                 <Setter Property="Margin" Value="2" />
             </Style>
         </Grid.Resources>
@@ -33,7 +36,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <!-- COL 0 -->
-        <local:PictureBoxHost x:Name="previewBox" DockPanel.Dock="Left" />
+        <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}"/>
         <!-- COL 1 -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
@@ -55,8 +58,7 @@
             </ComboBox>
 
             <!-- ROW 1 -->
-
-            <local:PictureBoxHost x:Name="filteredBox" DockPanel.Dock="Right" Grid.Row="1"/>
+            <Image Source="{Binding FilteredPreviewImage, Converter={StaticResource BitmapValueConverter}}" Grid.Row="1"/>
 
             <!-- ROW 2 -->
             <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}" Grid.Row="2">

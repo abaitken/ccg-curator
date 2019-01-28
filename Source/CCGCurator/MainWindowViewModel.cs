@@ -22,9 +22,13 @@ namespace CCGCurator
         private bool capturing;
         private CardDetection cardDetection;
 
-        private PictureBox filteredBox;
+
+        private Bitmap filteredPreviewImage;
+
         private IEnumerable<ImageFeed> imageFeeds;
-        private PictureBox previewBox;
+
+
+        private Bitmap previewImage;
         public List<Card> referenceCards = new List<Card>();
         private ImageFeed selectedImageFeed;
 
@@ -93,6 +97,32 @@ namespace CCGCurator
 
         public ObservableCollection<Card> DetectedCards { get; }
 
+        public Bitmap PreviewImage
+        {
+            get => previewImage;
+            set
+            {
+                if (previewImage == value)
+                    return;
+
+                previewImage = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public Bitmap FilteredPreviewImage
+        {
+            get => filteredPreviewImage;
+            set
+            {
+                if (filteredPreviewImage == value)
+                    return;
+
+                filteredPreviewImage = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         internal void Closing()
         {
             StopCapturing();
@@ -101,14 +131,12 @@ namespace CCGCurator
             Settings.Save();
         }
 
-        internal void ViewLoaded(PictureBox previewBox, PictureBox filteredBox)
+        internal void ViewLoaded()
         {
             if (viewLoaded)
                 return;
 
             viewLoaded = true;
-            this.previewBox = previewBox;
-            this.filteredBox = filteredBox;
             captureBox = new PictureBox();
             LoadData();
             cameraFilters = new Filters();
@@ -184,9 +212,10 @@ namespace CCGCurator
             lock (_locker)
             {
                 var fromSet = SelectedSetFilter ?? SetFilter.All;
-                detectedCards = cardDetection.Process(captured, out var filtered, out var preview, referenceCards, fromSet);
-                filteredBox.Image = filtered;
-                previewBox.Image = preview;
+                detectedCards =
+                    cardDetection.Process(captured, out var filtered, out var preview, referenceCards, fromSet);
+                FilteredPreviewImage = filtered;
+                PreviewImage = preview;
             }
 
             if (detectedCards.Any())
@@ -211,10 +240,7 @@ namespace CCGCurator
                 {
                     allSetsFilter
                 };
-                foreach (var set in sets)
-                {
-                    setFilters.Add(new SetFilter(set));
-                }
+                foreach (var set in sets) setFilters.Add(new SetFilter(set));
 
                 SetFilters = setFilters;
                 SelectedSetFilter = allSetsFilter;

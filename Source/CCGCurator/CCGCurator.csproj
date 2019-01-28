@@ -98,6 +98,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="BitmapValueConverter.cs" />
+    <Compile Include="ImageExtensions.cs" />
     <Compile Include="SetFilter.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -120,7 +122,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainWindowViewModel.cs" />
-    <Compile Include="PictureBoxHost.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
