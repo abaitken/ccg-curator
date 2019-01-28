@@ -18,12 +18,6 @@ using Timer = System.Timers.Timer;
 
 namespace CCGCurator.ReferenceBuilder
 {
-    enum ViewModelState
-    {
-        FetchingData,
-        Ready,
-        Processing
-    }
     internal class MainWindowViewModel : ViewModel, IDataActionsNotifier
     {
         private readonly Timer timer;

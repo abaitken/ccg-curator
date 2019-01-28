@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Forms;
 using CCGCurator.Common;
 using CCGCurator.Data;
@@ -23,6 +25,9 @@ namespace CCGCurator
         private CardDetection cardDetection;
 
 
+        private ICollectionView detectedCardsView;
+
+
         private Bitmap filteredPreviewImage;
 
         private IEnumerable<ImageFeed> imageFeeds;
@@ -39,9 +44,12 @@ namespace CCGCurator
         private IEnumerable<SetFilter> setFilters;
         private bool viewLoaded;
 
+
+        private ViewModelState viewModelState;
+
         public MainWindowViewModel()
         {
-            DetectedCards = new ObservableCollection<Card>();
+            DetectedCards = new ObservableCollection<DetectedCard>();
         }
 
         private ISettings Settings => Properties.Settings.Default;
@@ -95,7 +103,7 @@ namespace CCGCurator
             }
         }
 
-        public ObservableCollection<Card> DetectedCards { get; }
+        public ObservableCollection<DetectedCard> DetectedCards { get; }
 
         public Bitmap PreviewImage
         {
@@ -123,6 +131,32 @@ namespace CCGCurator
             }
         }
 
+        public ICollectionView DetectedCardsView
+        {
+            get => detectedCardsView;
+            set
+            {
+                if (detectedCardsView == value)
+                    return;
+
+                detectedCardsView = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public ViewModelState ViewModelState
+        {
+            get => viewModelState;
+            set
+            {
+                if (viewModelState == value)
+                    return;
+
+                viewModelState = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         internal void Closing()
         {
             StopCapturing();
@@ -137,19 +171,28 @@ namespace CCGCurator
                 return;
 
             viewLoaded = true;
-            captureBox = new PictureBox();
-            LoadData();
-            cameraFilters = new Filters();
-            var imageFeeds = new List<ImageFeed>();
-            for (var i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
-                imageFeeds.Add(new ImageFeed(cameraFilters.VideoInputDevices[i].Name, i));
-            ImageFeeds = imageFeeds;
 
-            var previousIndex = Settings.WebcamIndex;
-            if (previousIndex >= imageFeeds.Count)
-                previousIndex = 0;
+            Task.Run(() =>
+            {
+                captureBox = new PictureBox();
+                LoadData();
+                cameraFilters = new Filters();
+                var imageFeeds = new List<ImageFeed>();
+                for (var i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
+                    imageFeeds.Add(new ImageFeed(cameraFilters.VideoInputDevices[i].Name, i));
+                ImageFeeds = imageFeeds;
 
-            SelectedImageFeed = imageFeeds[previousIndex];
+                var previousIndex = Settings.WebcamIndex;
+                if (previousIndex >= imageFeeds.Count)
+                    previousIndex = 0;
+
+                SelectedImageFeed = imageFeeds[previousIndex];
+                var collectionView = CollectionViewSource.GetDefaultView(DetectedCards);
+                collectionView.SortDescriptions.Add(new SortDescription(DetectedCard.OccurrencesPropertyName,
+                    ListSortDirection.Descending));
+                DetectedCardsView = collectionView;
+                ViewModelState = ViewModelState.Ready;
+            });
         }
 
         private Size CalculateCaptureFrameSize(Size maxSize)
@@ -222,8 +265,19 @@ namespace CCGCurator
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     foreach (var detectedCard in detectedCards)
-                        if (!DetectedCards.Contains(detectedCard))
-                            DetectedCards.Add(detectedCard);
+                    {
+                        var existingItem = DetectedCards.FirstOrDefault(i => i.Card == detectedCard);
+                        var itemExists = existingItem != null;
+                        var item = !itemExists ? new DetectedCard(detectedCard) : existingItem;
+
+
+                        if (itemExists)
+                            item.Occurrences++;
+                        else
+                            DetectedCards.Add(item);
+
+                        DetectedCardsView.Refresh();
+                    }
                 });
         }
 

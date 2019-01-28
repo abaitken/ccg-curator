@@ -5,12 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CCGCurator"
         xmlns:data="clr-namespace:CCGCurator.Data;assembly=CCGCurator.Data"
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:common="clr-namespace:CCGCurator.Common;assembly=CCGCurator.Common"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Window.Resources>
         <local:BitmapValueConverter x:Key="BitmapValueConverter"/>
+        <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
     </Window.Resources>
-    <Grid>
+    <Grid IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}">
         <Grid.Resources>
             <Style TargetType="FrameworkElement">
                 <Setter Property="Margin" Value="2" />
@@ -70,13 +73,13 @@
             </ComboBox>
 
             <!-- ROW 3 -->
-            <ListBox ItemsSource="{Binding DetectedCards}" Grid.Row="3">
+            <ListBox ItemsSource="{Binding DetectedCardsView}" Grid.Row="3">
                 <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type data:Card}">
+                    <DataTemplate DataType="{x:Type local:DetectedCard}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text="{Binding Card.Name}" />
                             <TextBlock Text="," />
-                            <TextBlock Text="{Binding Set.Name}" />
+                            <TextBlock Text="{Binding Card.Set.Name}" />
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
