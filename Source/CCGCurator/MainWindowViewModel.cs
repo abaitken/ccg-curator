@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using CCGCurator.Common;
 using CCGCurator.Data;
 using DirectX.Capture;
+using Application = System.Windows.Application;
 
 namespace CCGCurator
 {
@@ -26,6 +27,12 @@ namespace CCGCurator
         private PictureBox previewBox;
         public List<Card> referenceCards = new List<Card>();
         private ImageFeed selectedImageFeed;
+
+
+        private SetFilter selectedSetFilter;
+
+
+        private IEnumerable<SetFilter> setFilters;
         private bool viewLoaded;
 
         public MainWindowViewModel()
@@ -58,6 +65,32 @@ namespace CCGCurator
             }
         }
 
+        public SetFilter SelectedSetFilter
+        {
+            get => selectedSetFilter;
+            set
+            {
+                if (selectedSetFilter == value)
+                    return;
+
+                selectedSetFilter = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public IEnumerable<SetFilter> SetFilters
+        {
+            get => setFilters;
+            set
+            {
+                if (setFilters == value)
+                    return;
+
+                setFilters = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         public ObservableCollection<Card> DetectedCards { get; }
 
         internal void Closing()
@@ -77,7 +110,7 @@ namespace CCGCurator
             this.previewBox = previewBox;
             this.filteredBox = filteredBox;
             captureBox = new PictureBox();
-            LoadSourceCards();
+            LoadData();
             cameraFilters = new Filters();
             var imageFeeds = new List<ImageFeed>();
             for (var i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
@@ -93,11 +126,19 @@ namespace CCGCurator
 
         private Size CalculateCaptureFrameSize(Size maxSize)
         {
-            if (maxSize.Height >= 768)
-                return new Size(1024, 768);
-            if (maxSize.Height > 480)
-                return new Size(800, 600);
-            return new Size(640, 480);
+            var resolutions = new[]
+            {
+                new Size(1920, 1080),
+                new Size(1024, 768),
+                new Size(800, 600),
+                new Size(640, 480)
+            };
+
+            foreach (var resolution in resolutions)
+                if (maxSize.Height >= resolution.Height)
+                    return resolution;
+
+            return resolutions.Last();
         }
 
         private void StopCapturing()
@@ -142,13 +183,14 @@ namespace CCGCurator
 
             lock (_locker)
             {
-                detectedCards = cardDetection.Process(captured, out var filtered, out var preview, referenceCards);
+                var fromSet = SelectedSetFilter ?? SetFilter.All;
+                detectedCards = cardDetection.Process(captured, out var filtered, out var preview, referenceCards, fromSet);
                 filteredBox.Image = filtered;
                 previewBox.Image = preview;
             }
 
             if (detectedCards.Any())
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     foreach (var detectedCard in detectedCards)
                         if (!DetectedCards.Contains(detectedCard))
@@ -156,12 +198,26 @@ namespace CCGCurator
                 });
         }
 
-        private void LoadSourceCards()
+        private void LoadData()
         {
             Task.Run(() =>
             {
                 var localCardData = new LocalCardData(new ApplicationSettings().CardDataPath);
                 referenceCards = new List<Card>(localCardData.GetCardsWithHashes());
+
+                var sets = localCardData.GetSets();
+                var allSetsFilter = SetFilter.All;
+                var setFilters = new List<SetFilter>
+                {
+                    allSetsFilter
+                };
+                foreach (var set in sets)
+                {
+                    setFilters.Add(new SetFilter(set));
+                }
+
+                SetFilters = setFilters;
+                SelectedSetFilter = allSetsFilter;
             });
         }
     }

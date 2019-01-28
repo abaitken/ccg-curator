@@ -11,6 +11,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="3*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
@@ -30,7 +31,16 @@
         </UniformGrid>
 
         <!-- ROW 2 -->
-        <ListBox ItemsSource="{Binding DetectedCards}" Grid.Row="2">
+        <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}" Grid.Row="2">
+            <ComboBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type local:SetFilter}">
+                    <TextBlock Text="{Binding Name}"/>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <!-- ROW 3 -->
+        <ListBox ItemsSource="{Binding DetectedCards}" Grid.Row="3">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type data:Card}">
                     <StackPanel Orientation="Horizontal">

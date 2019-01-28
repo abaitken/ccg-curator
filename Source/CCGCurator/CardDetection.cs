@@ -182,15 +182,18 @@ namespace CCGCurator
             return result;
         }
 
-        private Card FindBestMatch(ulong needle, List<Card> referenceCards)
+        private Card FindBestMatch(ulong needle, List<Card> referenceCards, SetFilter fromSet)
         {
             Card bestMatch = null;
             var lowestHamming = int.MaxValue;
 
             var phash = new pHash();
-
+            var setComparer = new SetEqualityComparer();
             foreach (var referenceCard in referenceCards)
             {
+                if(fromSet != SetFilter.All && !setComparer.Equals(referenceCard.Set, fromSet.Set))
+                    continue;
+
                 var hamming = phash.HammingDistance(referenceCard.pHash, needle);
                 if (hamming < lowestHamming)
                 {
@@ -202,14 +205,15 @@ namespace CCGCurator
             return bestMatch;
         }
 
-        private List<Tuple<DetectedCard, Card>> MatchCards(List<DetectedCard> detections, List<Card> referenceCards)
+        private List<Tuple<DetectedCard, Card>> MatchCards(List<DetectedCard> detections, List<Card> referenceCards,
+            SetFilter fromSet)
         {
             var phash = new pHash();
             var matchedCards = new List<Tuple<DetectedCard, Card>>();
             foreach (var detectedCard in detections)
             {
                 var cardHash = phash.ImageHash(detectedCard.cardBitmap);
-                var bestMatch = FindBestMatch(cardHash, referenceCards);
+                var bestMatch = FindBestMatch(cardHash, referenceCards, fromSet);
 
                 if (bestMatch != null)
                 {
@@ -234,10 +238,11 @@ namespace CCGCurator
             return matchedCards;
         }
 
-        public List<Card> Process(Bitmap captured, out Bitmap greyscaleDetectionImage, out Bitmap previewImage, List<Card> referenceCards)
+        public List<Card> Process(Bitmap captured, out Bitmap greyscaleDetectionImage, out Bitmap previewImage,
+            List<Card> referenceCards, SetFilter fromSet)
         {
             var cards = DetectCards(captured, out greyscaleDetectionImage);
-            var matchedCards = MatchCards(cards, referenceCards);
+            var matchedCards = MatchCards(cards, referenceCards, fromSet);
             previewImage = CreatePreviewImage(matchedCards, captured);
 
             var result = from item in matchedCards
