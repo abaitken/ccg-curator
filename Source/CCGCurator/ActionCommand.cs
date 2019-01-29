@@ -7,11 +7,11 @@ namespace CCGCurator
     {
         private readonly Func<bool> canExecute;
 
-        public ActionCommand(string key, Action action, KeyGesture keyGesture)
+        public ActionCommand(string key, Action<object> action, KeyGesture keyGesture)
         : this(key, action, () => true, keyGesture)
         {
         }
-        public ActionCommand(string key, Action action, Func<bool> canExecute, KeyGesture keyGesture)
+        public ActionCommand(string key, Action<object> action, Func<bool> canExecute, KeyGesture keyGesture)
         {
             this.canExecute = canExecute;
             Key = key;
@@ -20,7 +20,7 @@ namespace CCGCurator
         }
 
         public string Key { get; }
-        public Action Action { get; }
+        public Action<object> Action { get; }
         public KeyGesture KeyGesture { get; }
 
         public ICommand Command => this;
@@ -32,7 +32,7 @@ namespace CCGCurator
 
         public void Execute(object parameter)
         {
-            Action();
+            Action(parameter);
         }
 
         public event EventHandler CanExecuteChanged;

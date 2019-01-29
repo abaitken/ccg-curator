@@ -274,7 +274,7 @@ namespace CCGCurator
             var commands = new[]
             {
                 new ActionCommand("Clear", OnClear, new KeyGesture(Key.C, ModifierKeys.Control)),
-                new ActionCommand("Add", OnAdd, () => SelectedDetectedCard != null, new KeyGesture(Key.A, ModifierKeys.Control))
+                new ActionCommand("Add", OnAdd, /*() => SelectedDetectedCard != null, */new KeyGesture(Key.A, ModifierKeys.Control))
             };
             Commands = commands.ToDictionary(k => k.Key, v => v);
 
@@ -320,24 +320,27 @@ namespace CCGCurator
 
         private void RefreshCommands()
         {
-            foreach (var command in Commands) command.Value.RaiseCanExecuteChanged();
+            //foreach (var command in Commands) command.Value.RaiseCanExecuteChanged();
         }
 
-        private void OnAdd()
+        private void OnAdd(object parameter)
         {
-            if (SelectedDetectedCard == null)
+            if (SelectedDetectedCard == null && parameter == null)
                 return;
 
             var applicationSettings = new ApplicationSettings();
             var collectionData = new CardCollection(applicationSettings.CollectionDataPath);
-            var collectedCard = new CollectedCard(Guid.NewGuid(), SelectedDetectedCard.Card, CardQuality.Unspecified, false);
+            var detectedCard = (DetectedCard)parameter ?? SelectedDetectedCard;
+            var collectedCard = new CollectedCard(Guid.NewGuid(), detectedCard.Card, CardQuality.Unspecified, IsFoil);
             collectionData.Add(collectedCard);
             cardCollection.Add(collectedCard);
             CardCollectionCollectionView.Refresh();
             collectionData.Close();
+            OnClear(null);
+            IsFoil = false;
         }
 
-        private void OnClear()
+        private void OnClear(object obj)
         {
             DetectedCards = new List<DetectedCard>();
             RecreateDetectedCardsView();
@@ -474,5 +477,21 @@ namespace CCGCurator
                 SelectedSetFilter = allSetsFilter;
             });
         }
+
+
+        bool isFoil;
+        public bool IsFoil
+        {
+            get { return isFoil; }
+            set
+            {
+                if (isFoil == value)
+                    return;
+
+                isFoil = value;
+                NotifyPropertyChanged();
+            }
+        }
+
     }
 }

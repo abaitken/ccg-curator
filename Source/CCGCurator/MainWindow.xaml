@@ -8,7 +8,8 @@
         xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:common="clr-namespace:CCGCurator.Common;assembly=CCGCurator.Common"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        x:Name="ThisWindow"
+        Title="CCG Curator" Height="450" Width="800">
     <Window.Resources>
         <local:BitmapValueConverter x:Key="BitmapValueConverter" />
         <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
@@ -91,7 +92,6 @@
                 <RowDefinition Height="3*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- ROW 0 -->
@@ -125,30 +125,40 @@
 
             <!-- ROW 3 -->
             <GroupBox Header="Detected cards" Grid.Row="3">
-                <ListBox ItemsSource="{Binding DetectedCardsView}"
-                                 SelectedItem="{Binding SelectedDetectedCard}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type local:DetectedCard}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Card.Name}" />
-                                <TextBlock Text="," />
-                                <TextBlock Text="{Binding Card.Set.Name}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </GroupBox>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-            <!-- ROW 4 -->
-            <Grid Grid.Row="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="2*" />
-                </Grid.ColumnDefinitions>
-                <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
-                <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
-            </Grid>
+                    <ListBox ItemsSource="{Binding DetectedCardsView}"
+                             SelectedItem="{Binding SelectedDetectedCard}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:DetectedCard}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="+" Command="{Binding DataContext.Commands[Add], ElementName=ThisWindow}" CommandParameter="{Binding}"></Button>
+                                    <TextBlock Text="{Binding Card.Name}" />
+                                    <TextBlock Text="," />
+                                    <TextBlock Text="{Binding Card.Set.Name}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <CheckBox Content="Foil" IsChecked="{Binding IsFoil}" Grid.Row="1"/>
+                    <Grid Grid.Row="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
+                        <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
+                    </Grid>
+                </Grid>
+                
+            </GroupBox>
         </Grid>
     </Grid>
 </Window>
