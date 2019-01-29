@@ -9,6 +9,7 @@ namespace CCGCurator
     interface ISettings
     {
         int WebcamIndex { get; set; }
+        int RotationDegrees { get; set; }
         void Save();
     }
 

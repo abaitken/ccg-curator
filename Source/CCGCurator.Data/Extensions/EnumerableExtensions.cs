@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CCGCurator.Data
 {
-    internal static class EnumerableExtensions
+    public static class EnumerableExtensions
     {
         public static string BuildCharacterSeparatedString<T>(this IEnumerable<T> collection, char separator = ',')
         {
@@ -24,6 +24,16 @@ namespace CCGCurator.Data
             }
 
             return result.ToString();
+        }
+
+        public static IEnumerable<int> Range(int start, int stop, int step)
+        {
+            var value = start;
+            while (value <= stop)
+            {
+                yield return value;
+                value += step;
+            }
         }
     }
 }

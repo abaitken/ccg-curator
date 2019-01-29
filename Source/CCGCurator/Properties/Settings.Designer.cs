@@ -34,5 +34,17 @@ namespace CCGCurator.Properties {
                 this["WebcamIndex"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int RotationDegrees {
+            get {
+                return ((int)(this["RotationDegrees"]));
+            }
+            set {
+                this["RotationDegrees"] = value;
+            }
+        }
     }
 }

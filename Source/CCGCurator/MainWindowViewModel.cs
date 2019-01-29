@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,6 +14,7 @@ using CCGCurator.Common;
 using CCGCurator.Data;
 using DirectX.Capture;
 using Application = System.Windows.Application;
+using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 
 namespace CCGCurator
@@ -180,6 +182,7 @@ namespace CCGCurator
         {
             StopCapturing();
 
+            Settings.RotationDegrees = RotationDegrees;
             Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
             Settings.Save();
         }
@@ -208,10 +211,19 @@ namespace CCGCurator
                 if (previousIndex >= imageFeeds.Count)
                     previousIndex = 0;
 
+                RotationDegrees = ValidateRotation(Settings.RotationDegrees);
                 SelectedImageFeed = imageFeeds[previousIndex];
                 ViewModelState = ViewModelState.Ready;
             });
             SetupBindings(window);
+        }
+
+        private int ValidateRotation(int settingsRotationDegrees)
+        {
+            var validValues = EnumerableExtensions.Range(-180, 180, 90);
+            if (validValues.Contains(settingsRotationDegrees))
+                return settingsRotationDegrees;
+            return 0;
         }
 
         private void LoadCardCollection()
@@ -264,6 +276,21 @@ namespace CCGCurator
             {
                 window.InputBindings.Add(command.CreateInputBinding());
                 window.CommandBindings.Add(command.CreateCommandBinding());
+            }
+        }
+
+
+        int rotationDegrees;
+        public int RotationDegrees
+        {
+            get { return rotationDegrees; }
+            set
+            {
+                if (rotationDegrees == value)
+                    return;
+
+                rotationDegrees = value;
+                NotifyPropertyChanged();
             }
         }
 
@@ -369,6 +396,7 @@ namespace CCGCurator
 
             lock (captureThreadLocker)
             {
+                captured = RotateImage(captured);
                 var fromSet = SelectedSetFilter ?? SetFilter.All;
                 detectedCards =
                     cardDetection.Process(captured, out var filtered, out var preview, referenceCards, fromSet);
@@ -394,6 +422,29 @@ namespace CCGCurator
                         DetectedCardsView.Refresh();
                     }
                 });
+        }
+
+        private Bitmap RotateImage(Bitmap original)
+        {
+            if (RotationDegrees == 0)
+                return original;
+
+            var center = new PointF((float) original.Width / 2, (float) original.Height / 2);
+            var result = new Bitmap(original.Width, original.Height, original.PixelFormat);
+
+            result.SetResolution(original.HorizontalResolution, original.VerticalResolution);
+
+            using (var g = Graphics.FromImage(result))
+            {
+                var matrix = new Matrix();
+
+                matrix.RotateAt(RotationDegrees, center);
+
+                g.Transform = matrix;
+                g.DrawImage(original, new Point());
+            }
+
+            return result;
         }
 
         private void LoadData()

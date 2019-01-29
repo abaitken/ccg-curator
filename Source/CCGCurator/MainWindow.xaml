@@ -22,7 +22,16 @@
         <Style TargetType="TextBox">
             <Setter Property="Margin" Value="4" />
         </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Slider">
+            <Setter Property="Margin" Value="4" />
+        </Style>
         <Style TargetType="ListBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ListView">
             <Setter Property="Margin" Value="4" />
         </Style>
         <Style TargetType="ComboBox">
@@ -48,7 +57,16 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <GroupBox Header="Preview">
-                <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Rotation:"></TextBlock>
+                    <Slider Grid.Row="1" Minimum="-180" Maximum="180" AutoToolTipPlacement="BottomRight" TickFrequency="90" IsSnapToTickEnabled="True" TickPlacement="Both" Value="{Binding RotationDegrees}"/>
+                    <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" Grid.Row="2" />
+                </Grid>
             </GroupBox>
 
             <ListView ItemsSource="{Binding CardCollectionCollectionView}" Grid.Row="1">
