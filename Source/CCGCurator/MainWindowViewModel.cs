@@ -14,6 +14,7 @@ using CCGCurator.Common;
 using CCGCurator.Data;
 using DirectX.Capture;
 using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 
@@ -180,11 +181,16 @@ namespace CCGCurator
 
         internal void Closing()
         {
-            StopCapturing();
-
             Settings.RotationDegrees = RotationDegrees;
             Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
             Settings.Save();
+
+            // hack - https://stackoverflow.com/questions/38528908/stopping-imediacontrol-never-ends
+            if (!Task.Run(() => StopCapturing()).Wait(TimeSpan.FromSeconds(5)))
+            {
+                MessageBox.Show("Could not stop the capturing stream. The application will now forcibly close.");
+                Environment.FailFast("Could not stop the capturing stream.");
+            }
         }
 
         internal void ViewLoaded(Window window)
@@ -319,7 +325,7 @@ namespace CCGCurator
 
         private void OnAdd()
         {
-            if(SelectedDetectedCard == null)
+            if (SelectedDetectedCard == null)
                 return;
 
             var applicationSettings = new ApplicationSettings();
@@ -392,36 +398,38 @@ namespace CCGCurator
             if (cardDetection == null || !capturing)
                 return;
 
-            List<Card> detectedCards;
-
             lock (captureThreadLocker)
             {
                 captured = RotateImage(captured);
                 var fromSet = SelectedSetFilter ?? SetFilter.All;
-                detectedCards =
-                    cardDetection.Process(captured, out var filtered, out var preview, referenceCards, fromSet);
+                var detectedCards = cardDetection.Process(captured, out var filtered, out var preview, referenceCards, fromSet);
                 FilteredPreviewImage = filtered;
                 PreviewImage = preview;
+
+                UpdateDetectedCards(detectedCards);
+            }
+        }
+
+        private void UpdateDetectedCards(List<Card> detectedCards)
+        {
+            if (!detectedCards.Any()) return;
+
+            foreach (var detectedCard in detectedCards)
+            {
+                var existingItem = DetectedCards.FirstOrDefault(i => i.Card == detectedCard);
+                var itemExists = existingItem != null;
+                var item = !itemExists ? new DetectedCard(detectedCard) : existingItem;
+
+                if (itemExists)
+                    item.Occurrences++;
+                else
+                    DetectedCards.Add(item);
             }
 
-            if (detectedCards.Any())
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    foreach (var detectedCard in detectedCards)
-                    {
-                        var existingItem = DetectedCards.FirstOrDefault(i => i.Card == detectedCard);
-                        var itemExists = existingItem != null;
-                        var item = !itemExists ? new DetectedCard(detectedCard) : existingItem;
-
-
-                        if (itemExists)
-                            item.Occurrences++;
-                        else
-                            DetectedCards.Add(item);
-
-                        DetectedCardsView.Refresh();
-                    }
-                });
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                DetectedCardsView.Refresh();
+            });
         }
 
         private Bitmap RotateImage(Bitmap original)
@@ -429,7 +437,7 @@ namespace CCGCurator
             if (RotationDegrees == 0)
                 return original;
 
-            var center = new PointF((float) original.Width / 2, (float) original.Height / 2);
+            var center = new PointF((float)original.Width / 2, (float)original.Height / 2);
             var result = new Bitmap(original.Width, original.Height, original.PixelFormat);
 
             result.SetResolution(original.HorizontalResolution, original.VerticalResolution);
