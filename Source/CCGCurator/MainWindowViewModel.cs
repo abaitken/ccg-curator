@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
@@ -192,6 +193,7 @@ namespace CCGCurator
 
             Task.Run(() => { LoadData(); });
             Task.Run(() => { RecreateDetectedCardsView(); });
+            Task.Run(() => { LoadCardCollection(); });
 
             Task.Run(() =>
             {
@@ -211,6 +213,34 @@ namespace CCGCurator
             });
             SetupBindings(window);
         }
+
+        private void LoadCardCollection()
+        {
+            var applicationSettings = new ApplicationSettings();
+            var collectionData = new CardCollection(applicationSettings.CollectionDataPath);
+            cardCollection = new List<CollectedCard>(collectionData.GetCollection());
+            collectionData.Close();
+
+
+            var collectionView = CollectionViewSource.GetDefaultView(cardCollection);
+            CardCollectionCollectionView = collectionView;
+        }
+
+
+        ICollectionView cardCollectionCollectionView;
+        public ICollectionView CardCollectionCollectionView
+        {
+            get { return cardCollectionCollectionView; }
+            set
+            {
+                if (cardCollectionCollectionView == value)
+                    return;
+
+                cardCollectionCollectionView = value;
+                NotifyPropertyChanged();
+            }
+        }
+
 
         private void RecreateDetectedCardsView()
         {
@@ -237,8 +267,35 @@ namespace CCGCurator
             }
         }
 
+
+        DetectedCard selectedDetectedCard;
+        private List<CollectedCard> cardCollection;
+
+        public DetectedCard SelectedDetectedCard
+        {
+            get { return selectedDetectedCard; }
+            set
+            {
+                if (selectedDetectedCard == value)
+                    return;
+
+                selectedDetectedCard = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         private void OnAdd()
         {
+            if(SelectedDetectedCard == null)
+                return;
+
+            var applicationSettings = new ApplicationSettings();
+            var collectionData = new CardCollection(applicationSettings.CollectionDataPath);
+            var collectedCard = new CollectedCard(Guid.NewGuid(), SelectedDetectedCard.Card, CardQuality.Unspecified, false);
+            collectionData.Add(collectedCard);
+            cardCollection.Add(collectedCard);
+            CardCollectionCollectionView.Refresh();
+            collectionData.Close();
         }
 
         private void OnClear()
@@ -337,7 +394,7 @@ namespace CCGCurator
         {
             Task.Run(() =>
             {
-                var localCardData = new LocalCardData(new ApplicationSettings().CardDataPath);
+                var localCardData = new LocalCardData(new ApplicationSettings().DetectionDataPath);
                 referenceCards = new List<Card>(localCardData.GetCardsWithHashes());
 
                 var sets = localCardData.GetSets();

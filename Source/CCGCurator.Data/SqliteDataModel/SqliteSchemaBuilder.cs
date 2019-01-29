@@ -80,7 +80,7 @@ namespace CCGCurator.Data
             }
 
             var columnType = property.PropertyType;
-            if (columnType == typeof(int) || columnType == typeof(long))
+            if (columnType == typeof(int) || columnType == typeof(long) || columnType.IsEnum)
                 return "integer";
             if (columnType == typeof(bool))
                 return "bit";
@@ -151,6 +151,9 @@ namespace CCGCurator.Data
                 var customBehaviour = (CustomColumnBehaviour)Activator.CreateInstance(columnData.CustomBehaviour);
                 processedValue = customBehaviour.ResolveValue(columnData, property, processedValue);
             }
+
+            if (value.GetType().IsEnum)
+                return ((int) processedValue).ToString();
 
             if (processedValue is string)
                 return $"'{EscapeString(processedValue.ToString())}'";

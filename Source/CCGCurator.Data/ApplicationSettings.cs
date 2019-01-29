@@ -26,19 +26,19 @@ namespace CCGCurator.Data
             }
         }
 
-        public string CardDataPath
+        public string DetectionDataPath
         {
             get
             {
-                return Path.Combine(DataFolder, "cards.sqlite");
+                return Path.Combine(DataFolder, "detectiondata.sqlite");
             }
         }
 
-        public string CatalogDataPath
+        public string CollectionDataPath
         {
             get
             {
-                return Path.Combine(DataFolder, "catalog.sqlite");
+                return Path.Combine(DataFolder, "collection.sqlite");
             }
         }
 
