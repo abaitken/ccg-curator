@@ -82,6 +82,8 @@ namespace CCGCurator.Data
             var columnType = property.PropertyType;
             if (columnType == typeof(int) || columnType == typeof(long))
                 return "integer";
+            if (columnType == typeof(bool))
+                return "bit";
             if (columnType == typeof(string))
                 return $"varchar({columnData.Size})";
 
@@ -150,7 +152,13 @@ namespace CCGCurator.Data
                 processedValue = customBehaviour.ResolveValue(columnData, property, processedValue);
             }
 
-            return processedValue is string ? $"'{EscapeString(processedValue.ToString())}'" : $"{processedValue}";
+            if (processedValue is string)
+                return $"'{EscapeString(processedValue.ToString())}'";
+
+            if (processedValue is bool b)
+                return b ? "1" : "0";
+            
+            return $"{processedValue}";
         }
 
         public string BuildSelectQuery(string[] properties = null, QueryCondition<T> condition = null, int? limit = null)

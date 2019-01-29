@@ -69,8 +69,10 @@
     </Compile>
     <Compile Include="ApplicationSettings.cs" />
     <Compile Include="Card.cs" />
-    <Compile Include="CardCatalog.cs" />
+    <Compile Include="CardCollection.cs" />
     <Compile Include="CardCustomBehaviour.cs" />
+    <Compile Include="CardQuality.cs" />
+    <Compile Include="CollectedCard.cs" />
     <Compile Include="CustomColumnBehaviour.cs" />
     <Compile Include="Extensions\EnumerableExtensions.cs" />
     <Compile Include="LocalCardData.cs" />

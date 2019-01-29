@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.IO;
@@ -95,6 +96,18 @@ namespace CCGCurator.Data
             var command = connection.CreateCommand();
             command.CommandText = sqlQuery;
             return command.ExecuteReader();
+        }
+
+        protected IEnumerable<T> ExecuteReader<T>(string query, Func<SQLiteDataReader, T> buildEntity)
+        {
+            var reader = ExecuteReader(query);
+            if (!reader.HasRows)
+                yield break;
+
+            while (reader.Read())
+            {
+                yield return buildEntity(reader);
+            }
         }
     }
 }
