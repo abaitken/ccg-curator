@@ -12,6 +12,8 @@ namespace CCGCurator.Data
                 throw new ArgumentException("Expected a value", "name");
             Name = name;
         }
+
+        [SqliteColumn("name", false)]
         public string Name { get; }
     }
 }

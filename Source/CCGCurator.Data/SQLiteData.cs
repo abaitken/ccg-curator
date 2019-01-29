@@ -7,7 +7,17 @@ namespace CCGCurator.Data
 {
     public abstract class SQLiteData
     {
+        [SqliteTable("version")]
+        private class SchemaVersion
+        {
+            [SqliteKey]
+            [SqliteColumn("version", false)]
+            public int Version { get; set; }
+        }
+
         private readonly SQLiteConnection connection;
+        private SqliteSchemaBuilder<SchemaVersion> versionSchema;
+
         protected SQLiteData(string databaseFilePath)
         {
             var exists = File.Exists(databaseFilePath);
@@ -15,6 +25,8 @@ namespace CCGCurator.Data
             connection = new SQLiteConnection("Data Source=" + databaseFilePath + ";Version=3;");
             connection.Open();
 
+            CreateSchemaBuildersCore();
+            CreateSchemaBuilders();
             if (!exists)
             {
                 InitializeDatabaseCore();
@@ -24,10 +36,18 @@ namespace CCGCurator.Data
             CheckVersion();
         }
 
+        protected abstract void CreateSchemaBuilders();
+
+        private void CreateSchemaBuildersCore()
+        {
+            versionSchema = new SqliteSchemaBuilder<SchemaVersion>();
+        }
+
         private void InitializeDatabaseCore()
         {
-            ExecuteNonQuery("CREATE TABLE version(version integer NOT NULL, PRIMARY KEY(version));");
-            ExecuteNonQuery($"INSERT INTO version (version) values ({Version});");
+            ExecuteNonQuery(versionSchema.BuildCreateQuery());
+            var schemaVersion = new SchemaVersion {Version = this.Version};
+            ExecuteNonQuery(versionSchema.BuildInsertQuery(schemaVersion));
         }
 
         public void Close()
@@ -38,7 +58,7 @@ namespace CCGCurator.Data
         protected abstract int Version { get; }
         protected void CheckVersion()
         {
-            var dbVersion = ExecuteScalarValueQuery<long>($"SELECT version FROM version LIMIT 1;");
+            var dbVersion = ExecuteScalarValueQuery<long>(versionSchema.BuildSelectQuery(limit: 1));
 
             if (dbVersion != Version)
                 throw new InvalidOperationException($"Database is version '{dbVersion}', expected version '{Version}'");

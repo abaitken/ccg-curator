@@ -1,5 +1,6 @@
 ﻿namespace CCGCurator.Data
 {
+    [SqliteTable("cards")]
     public class Card : NamedItem
     {
         public Card(string name, int multiverseId, string uuid, Set set)
@@ -16,9 +17,14 @@
             Set = set;
         }
 
+        [SqliteColumn("multiverseid", false)]
         public int MultiverseId { get; }
+        [SqliteColumn("uuid", false, 50)]
+        [SqliteKey]
         public string UUID { get; }
+        [SqliteColumn("phash", false, customBehaviour: typeof(CardCustomBehaviour))]
         public ulong pHash { get; set; }
+        [SqliteColumn("setid", false, customBehaviour: typeof(CardCustomBehaviour))]
         public Set Set { get; }
     }
 }

@@ -9,6 +9,11 @@ namespace CCGCurator.Data
         {
         }
 
+        protected override void CreateSchemaBuilders()
+        {
+            throw new NotImplementedException();
+        }
+
         protected override int Version => 1;
 
         protected override void InitializeDatabase()

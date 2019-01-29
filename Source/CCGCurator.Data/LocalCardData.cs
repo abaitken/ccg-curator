@@ -8,28 +8,36 @@ namespace CCGCurator.Data
 {
     public sealed class LocalCardData : SQLiteData
     {
+        private SqliteSchemaBuilder<Set> setSchemaBuilder;
+        private SqliteSchemaBuilder<Card> cardSchemaBuilder;
+
         public LocalCardData(string databaseFilePath)
             : base(databaseFilePath)
         {
+        }
+
+        protected override void CreateSchemaBuilders()
+        {
+            setSchemaBuilder = new SqliteSchemaBuilder<Set>();
+            cardSchemaBuilder = new SqliteSchemaBuilder<Card>();
         }
 
         protected override int Version => 1;
 
         protected override void InitializeDatabase()
         {
-            ExecuteNonQuery("CREATE TABLE sets(setid integer NOT NULL, name varchar(255), code varchar(10), PRIMARY KEY(setid));");
-            ExecuteNonQuery("CREATE TABLE cards(multiverseid integer NOT NULL, name varchar(255), phash varchar(255), setid integer NOT NULL, uuid varchar(50) NOT NULL, PRIMARY KEY(uuid));");
+            ExecuteNonQuery(setSchemaBuilder.BuildCreateQuery());
+            ExecuteNonQuery(cardSchemaBuilder.BuildCreateQuery());
         }
         
         public void AddSet(Set set)
         {
-            ExecuteNonQuery($"INSERT INTO sets (setid, name, code) values ({set.SetId}, '{EscapeString(set.Name)}', '{EscapeString(set.Code)}');");
+            ExecuteNonQuery(setSchemaBuilder.BuildInsertQuery(set));
         }
 
         public void AddCard(Card card)
         {
-            var set = card.Set;
-            ExecuteNonQuery($"INSERT INTO cards (multiverseid, name, phash, setid, uuid) values ({card.MultiverseId}, '{EscapeString(card.Name)}', '{card.pHash.ToString()}', {set.SetId}, '{EscapeString(card.UUID)}');");
+            ExecuteNonQuery(cardSchemaBuilder.BuildInsertQuery(card));
         }
 
         public IEnumerable<Card> GetCardsWithHashes()
@@ -53,7 +61,10 @@ namespace CCGCurator.Data
 
         public IEnumerable<Set> GetSets()
         {
-            var reader = ExecuteReader("SELECT setid, name, code FROM sets;");
+            var reader = ExecuteReader(setSchemaBuilder.BuildSelectQuery(new []
+            {
+                nameof(Set.SetId), nameof(Set.Name), nameof(Set.Code)
+            }));
             if (!reader.HasRows)
                 yield break;
 
@@ -65,9 +76,11 @@ namespace CCGCurator.Data
 
         public void DeleteSetAndAssociatedCards(Set set)
         {
-            var setId = ExecuteScalarValueQuery<long>($"SELECT setid FROM sets WHERE code ='{set.Code}' LIMIT 1;");
-            ExecuteNonQuery($"DELETE FROM sets WHERE setid = {setId};");
-            ExecuteNonQuery($"DELETE FROM cards WHERE setid = {setId};");
+            var setId = ExecuteScalarValueQuery<long>(setSchemaBuilder.BuildSelectQuery(new[] {nameof(Set.SetId)},
+                setSchemaBuilder.CreateCondition(nameof(Set.Code), ConditionOperator.Equals, set),
+                1));
+            ExecuteNonQuery(setSchemaBuilder.BuildDeleteQuery(setSchemaBuilder.CreateCondition(nameof(Set.SetId), ConditionOperator.Equals, set)));
+            ExecuteNonQuery(cardSchemaBuilder.BuildDeleteQuery(cardSchemaBuilder.CreateCondition(nameof(Card.Set), ConditionOperator.Equals, set)));
         }
     }
 }
