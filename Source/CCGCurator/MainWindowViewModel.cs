@@ -28,7 +28,7 @@ namespace CCGCurator
         private CardDetection cardDetection;
 
 
-        private IDictionary<string, ICommand> commands;
+        private IDictionary<string, ActionCommand> commands;
 
 
         private ICollectionView detectedCardsView;
@@ -163,7 +163,7 @@ namespace CCGCurator
             }
         }
 
-        public IDictionary<string, ICommand> Commands
+        public IDictionary<string, ActionCommand> Commands
         {
             get => commands;
             set
@@ -256,9 +256,9 @@ namespace CCGCurator
             var commands = new[]
             {
                 new ActionCommand("Clear", OnClear, new KeyGesture(Key.C, ModifierKeys.Control)),
-                new ActionCommand("Add", OnAdd, new KeyGesture(Key.A, ModifierKeys.Control))
+                new ActionCommand("Add", OnAdd, () => SelectedDetectedCard != null, new KeyGesture(Key.A, ModifierKeys.Control))
             };
-            Commands = commands.ToDictionary(k => k.Key, v => v.Command);
+            Commands = commands.ToDictionary(k => k.Key, v => v);
 
             foreach (var command in commands)
             {
@@ -281,7 +281,13 @@ namespace CCGCurator
 
                 selectedDetectedCard = value;
                 NotifyPropertyChanged();
+                RefreshCommands();
             }
+        }
+
+        private void RefreshCommands()
+        {
+            foreach (var command in Commands) command.Value.RaiseCanExecuteChanged();
         }
 
         private void OnAdd()

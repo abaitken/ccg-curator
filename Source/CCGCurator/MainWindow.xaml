@@ -35,111 +35,102 @@
             <Setter Property="Margin" Value="2" />
         </Style>
     </Window.Resources>
-    <TabControl
+    <Grid
         IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}">
-        <TabItem Header="Scanning">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="3*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <!-- COL 0 -->
-                <GroupBox Header="Preview">
-                    <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
-                </GroupBox>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <!-- COL 0 -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <GroupBox Header="Preview">
+                <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
+            </GroupBox>
 
-                <!-- COL 1 -->
-                <Grid Grid.Column="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="3*" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+            <ListView ItemsSource="{Binding CardCollectionCollectionView}" Grid.Row="1">
+                <ListView.View>
+                    <GridView>
+                        <GridView.Columns>
+                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Name"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding SetName}" Header="Set"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding SetCode}" Header="Set Code"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding CardQuality}" Header="Quality"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Foil}" Header="Foil"/>
+                        </GridView.Columns>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
 
-                    <!-- ROW 0 -->
-                    <GroupBox Header="Image feed"
+        <!-- COL 1 -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- ROW 0 -->
+            <GroupBox Header="Image feed"
                               Grid.Row="0">
-                        <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top"
+                <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top"
                                   SelectedItem="{Binding SelectedImageFeed}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </GroupBox>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
 
-                    <!-- ROW 1 -->
-                    <GroupBox Header="Detection view" Grid.Row="1">
-                        <Image Source="{Binding FilteredPreviewImage, Converter={StaticResource BitmapValueConverter}}" />
-                    </GroupBox>
+            <!-- ROW 1 -->
+            <GroupBox Header="Detection view" Grid.Row="1">
+                <Image Source="{Binding FilteredPreviewImage, Converter={StaticResource BitmapValueConverter}}" />
+            </GroupBox>
 
-                    <!-- ROW 2 -->
-                    <GroupBox Header="Set filter" Grid.Row="2">
-                        <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate DataType="{x:Type local:SetFilter}">
-                                    <TextBlock Text="{Binding Name}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </GroupBox>
+            <!-- ROW 2 -->
+            <GroupBox Header="Set filter" Grid.Row="2">
+                <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:SetFilter}">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
 
-                    <!-- ROW 3 -->
-                    <GroupBox Header="Detected cards" Grid.Row="3">
-                        <ListBox ItemsSource="{Binding DetectedCardsView}"
+            <!-- ROW 3 -->
+            <GroupBox Header="Detected cards" Grid.Row="3">
+                <ListBox ItemsSource="{Binding DetectedCardsView}"
                                  SelectedItem="{Binding SelectedDetectedCard}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate DataType="{x:Type local:DetectedCard}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Card.Name}" />
-                                        <TextBlock Text="," />
-                                        <TextBlock Text="{Binding Card.Set.Name}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </GroupBox>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:DetectedCard}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Card.Name}" />
+                                <TextBlock Text="," />
+                                <TextBlock Text="{Binding Card.Set.Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
 
-                    <!-- ROW 4 -->
-                    <Grid Grid.Row="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="2*" />
-                        </Grid.ColumnDefinitions>
-                        <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
-                        <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
-                    </Grid>
-                </Grid>
-            </Grid>
-        </TabItem>
-        <TabItem Header="Collection">
-            <Grid>
+            <!-- ROW 4 -->
+            <Grid Grid.Row="4">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="3*" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
-
-                <!-- COL 0 -->
-                <ListView ItemsSource="{Binding CardCollectionCollectionView}">
-                    <ListView.View>
-                        <GridView>
-                            <GridView.Columns>
-                                <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Name"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding SetName}" Header="Set"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding SetCode}" Header="Set Code"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding CardQuality}" Header="Quality"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding Foil}" Header="Foil"/>
-                            </GridView.Columns>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-
-                <!-- COL 1 -->
+                <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
+                <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
             </Grid>
-        </TabItem>
-    </TabControl>
+        </Grid>
+    </Grid>
 </Window>

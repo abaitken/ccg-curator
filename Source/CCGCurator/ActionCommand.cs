@@ -5,8 +5,15 @@ namespace CCGCurator
 {
     internal class ActionCommand : ICommand
     {
+        private readonly Func<bool> canExecute;
+
         public ActionCommand(string key, Action action, KeyGesture keyGesture)
+        : this(key, action, () => true, keyGesture)
         {
+        }
+        public ActionCommand(string key, Action action, Func<bool> canExecute, KeyGesture keyGesture)
+        {
+            this.canExecute = canExecute;
             Key = key;
             Action = action;
             KeyGesture = keyGesture;
@@ -20,7 +27,7 @@ namespace CCGCurator
 
         public bool CanExecute(object parameter)
         {
-            return true;
+            return canExecute();
         }
 
         public void Execute(object parameter)
@@ -38,6 +45,11 @@ namespace CCGCurator
         public CommandBinding CreateCommandBinding()
         {
             return new CommandBinding(this);
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }
