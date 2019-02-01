@@ -142,32 +142,26 @@ namespace CCGCurator.Views.Main
 
         private void SetupBindings(Window window)
         {
-            var keys = new Dictionary<string, Key>
+            var commandList = new[]
             {
-                { "Reset", Key.R },
-                { "AddCard", Key.Y },
-                { "IgnoreCard", Key.N },
-                { "Foil", Key.F }
+                new { Key = "DetectionPreview" , Command = (CommandModelBase)new ActionCommand(OnOpenDetectionPreview), Gesture = (Key?)null },
+                new { Key = "MyCollection" , Command = (CommandModelBase)new ActionCommand(OpenMyCollection), Gesture = (Key?)null },
+                new { Key = "OpenSettings" , Command = (CommandModelBase)new ActionCommand(OpenSettings), Gesture = (Key?)null },
+                new { Key = "AddCard" , Command = (CommandModelBase)new ActionCommand(OnAdd), Gesture = (Key?)Key.Y },
+                new { Key = "Reset" , Command = (CommandModelBase)new ActionCommand(ResetCurrentDetection), Gesture = (Key?)Key.R },
+                new { Key = "IgnoreCard" , Command = (CommandModelBase)new ActionCommand(IgnoreCard), Gesture = (Key?)Key.N },
+                new { Key = "Foil" , Command = (CommandModelBase)new ActionCommand(ToggleFoil), Gesture = (Key?)Key.F },
             };
 
-            Commands = new Dictionary<string, CommandModelBase>
-            {
-                { "DetectionPreview" , new ActionCommand(OnOpenDetectionPreview) },
-                { "MyCollection" , new ActionCommand(OpenMyCollection) },
-                { "OpenSettings" , new ActionCommand(OpenSettings) },
-                { "AddCard" , new ActionCommand(OnAdd) },
-                { "Reset" , new ActionCommand(ResetCurrentDetection) },
-                { "IgnoreCard" , new ActionCommand(IgnoreCard) },
-                { "Foil" , new ActionCommand(ToggleFoil) },
-            };
+            Commands = commandList.ToDictionary(k => k.Key, v => v.Command);
 
-            foreach (var command in commands)
+            foreach (var item in commandList)
             {
-                //if(gestures.TryGetValue(command.Key, out var gesture))
-                //    window.InputBindings.Add(command.Value.CreateInputBinding(gesture));
-                if(keys.TryGetValue(command.Key, out var key))
-                    window.InputBindings.Add(command.Value.CreateKeyBinding(key));
-                window.CommandBindings.Add(command.Value.CreateCommandBinding());
+                var command = item.Command;
+                var key = item.Gesture;
+                if(key.HasValue)
+                    window.InputBindings.Add(command.CreateKeyBinding(key.Value));
+                window.CommandBindings.Add(command.CreateCommandBinding());
             }
         }
 

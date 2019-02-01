@@ -3,18 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:CCGCurator"
-        xmlns:data="clr-namespace:CCGCurator.Data;assembly=CCGCurator.Data"
-        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:common="clr-namespace:CCGCurator.Common;assembly=CCGCurator.Common"
         xmlns:views="clr-namespace:CCGCurator.Views"
         xmlns:main="clr-namespace:CCGCurator.Views.Main"
         mc:Ignorable="d"
-        x:Name="ThisWindow"
         Title="CCG Curator" Height="450" Width="800">
     <Window.Resources>
         <views:BitmapValueConverter x:Key="BitmapValueConverter" />
         <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
+        <views:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
         <Style TargetType="FrameworkElement">
             <Setter Property="Margin" Value="4" />
@@ -57,8 +54,13 @@
         <GroupBox Header="Preview">
             <Grid>
                 <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
-                <main:OutlinedTextBlock Text="{Binding TopRankedDetection.Name}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="20" Stroke="Black" Fill="White" StrokeThickness="2" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <main:OutlinedTextBlock Text="{Binding TopRankedDetection.Name}"
+                                            FontSize="20" Stroke="Black" Fill="White" StrokeThickness="2" />
+
+                    <main:OutlinedTextBlock Text="(Foil)" Visibility="{Binding IsFoil, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            FontSize="20" Stroke="Black" Fill="White" StrokeThickness="2" />
+                </StackPanel>
             </Grid>
         </GroupBox>
 
@@ -85,6 +87,10 @@
                 <Button Content="My Collection" Command="{Binding Commands[MyCollection]}" />
                 <Button Content="Settings" Command="{Binding Commands[OpenSettings]}" />
                 <Button Content="Detection Preview" Command="{Binding Commands[DetectionPreview]}" />
+                <Button Content="(R) Reset Current Detection" Command="{Binding Commands[Reset]}" />
+                <Button Content="(Y) Add Current Detection" Command="{Binding Commands[AddCard]}" />
+                <Button Content="(N) Ignore Current Detection" Command="{Binding Commands[IgnoreCard]}" />
+                <Button Content="(F) Toggle Foil" Command="{Binding Commands[Foil]}" />
             </StackPanel>
         </Grid>
     </Grid>
