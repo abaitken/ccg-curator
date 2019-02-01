@@ -13,13 +13,14 @@ namespace CCGCurator.Data
             var type = typeof(T);
 
             var tableAttribute = type.GetCustomAttribute<SqliteTableAttribute>();
-            if(tableAttribute == null)
+            if (tableAttribute == null)
                 throw new ArgumentException("Given type does not have the SqliteTable attribute");
 
             TableName = tableAttribute.Name;
 
             var columns = (from property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                let columnAttribute = CustomAttributeExtensions.GetCustomAttribute<SqliteColumnAttribute>((MemberInfo) property)
+                let columnAttribute =
+                    CustomAttributeExtensions.GetCustomAttribute<SqliteColumnAttribute>((MemberInfo) property)
                 let keyAttribute = property.GetCustomAttribute<SqliteKeyAttribute>()
                 where columnAttribute != null
                 select new
@@ -75,7 +76,7 @@ namespace CCGCurator.Data
         {
             if (columnData.CustomBehaviour != null)
             {
-                var customBehaviour = (CustomColumnBehaviour)Activator.CreateInstance(columnData.CustomBehaviour);
+                var customBehaviour = (CustomColumnBehaviour) Activator.CreateInstance(columnData.CustomBehaviour);
                 return customBehaviour.MapType(columnData, property);
             }
 
@@ -127,7 +128,9 @@ namespace CCGCurator.Data
                 throw new ArgumentNullException();
 
             var fields = propertyValues.Keys.BuildCharacterSeparatedString(item => item.Item1.ResolveName(item.Item2));
-            var values = propertyValues.BuildCharacterSeparatedString(item => ResolveValue(item.Key.Item2, item.Value, item.Key.Item1));
+            var values =
+                propertyValues.BuildCharacterSeparatedString(item =>
+                    ResolveValue(item.Key.Item2, item.Value, item.Key.Item1));
 
             return $"INSERT INTO {TableName} ({fields}) values ({values});";
         }
@@ -148,7 +151,7 @@ namespace CCGCurator.Data
 
             if (columnData.CustomBehaviour != null)
             {
-                var customBehaviour = (CustomColumnBehaviour)Activator.CreateInstance(columnData.CustomBehaviour);
+                var customBehaviour = (CustomColumnBehaviour) Activator.CreateInstance(columnData.CustomBehaviour);
                 processedValue = customBehaviour.ResolveValue(columnData, property, processedValue);
             }
 
@@ -160,11 +163,12 @@ namespace CCGCurator.Data
 
             if (processedValue is bool b)
                 return b ? "1" : "0";
-            
+
             return $"{processedValue}";
         }
 
-        public string BuildSelectQuery(string[] properties = null, QueryCondition<T> condition = null, int? limit = null)
+        public string BuildSelectQuery(string[] properties = null, QueryCondition<T> condition = null,
+            int? limit = null)
         {
             var columns = SelectColumnsGivenModelProperties(properties);
             var fields = columns.BuildCharacterSeparatedString(item => item.Item1.ResolveName(item.Item2));
@@ -175,7 +179,8 @@ namespace CCGCurator.Data
             return $"SELECT {fields} FROM {TableName}{conditionText}{limitText};";
         }
 
-        private IEnumerable<Tuple<SqliteColumnAttribute, PropertyInfo>> SelectColumnsGivenModelProperties(IReadOnlyCollection<string> properties)
+        private IEnumerable<Tuple<SqliteColumnAttribute, PropertyInfo>> SelectColumnsGivenModelProperties(
+            IReadOnlyCollection<string> properties)
         {
             if (properties == null || properties.Count == 0)
                 return Columns.Values;
@@ -187,7 +192,8 @@ namespace CCGCurator.Data
             return columns;
         }
 
-        public QueryCondition<T> CreateCondition(string modelPropertyName, ConditionOperator conditionOperator, object value)
+        public QueryCondition<T> CreateCondition(string modelPropertyName, ConditionOperator conditionOperator,
+            object value)
         {
             return new QueryCondition<T>(modelPropertyName, conditionOperator, value);
         }
@@ -199,18 +205,25 @@ namespace CCGCurator.Data
             return CreateCondition(modelPropertyName, conditionOperator, value);
         }
 
+        public string BuildDeleteQuery(QueryCondition<T> condition)
+        {
+            var conditionText = $" WHERE {condition.Build(this)}";
+
+            return $"DELETE FROM {TableName}{conditionText};";
+        }
+
         internal class QueryCondition<T>
         {
-            public string ModelPropertyName { get; }
-            public ConditionOperator ConditionOperator { get; }
-            public object Value { get; }
-
             public QueryCondition(string modelPropertyName, ConditionOperator conditionOperator, object value)
             {
                 ModelPropertyName = modelPropertyName;
                 ConditionOperator = conditionOperator;
                 Value = value;
             }
+
+            public string ModelPropertyName { get; }
+            public ConditionOperator ConditionOperator { get; }
+            public object Value { get; }
 
             public string Build(SqliteSchemaBuilder<T> parent)
             {
@@ -234,13 +247,6 @@ namespace CCGCurator.Data
                         throw new ArgumentOutOfRangeException();
                 }
             }
-        }
-
-        public string BuildDeleteQuery(QueryCondition<T> condition)
-        {
-            var conditionText = $" WHERE {condition.Build(this)}";
-
-            return $"DELETE FROM {TableName}{conditionText};";
         }
     }
 

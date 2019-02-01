@@ -1,0 +1,149 @@
+﻿<Window x:Class="CCGCurator.MainWindow" x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CCGCurator"
+        xmlns:data="clr-namespace:CCGCurator.Data;assembly=CCGCurator.Data"
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:common="clr-namespace:CCGCurator.Common;assembly=CCGCurator.Common"
+        mc:Ignorable="d"
+        x:Name="ThisWindow"
+        Title="CCG Curator" Height="450" Width="800">
+    <Window.Resources>
+        <local:BitmapValueConverter x:Key="BitmapValueConverter" />
+        <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
+
+        <Style TargetType="FrameworkElement">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Slider">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ListView">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Image">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="2" />
+        </Style>
+    </Window.Resources>
+    <Grid
+        IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <!-- COL 0 -->
+        <GroupBox Header="Preview">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Rotation:" />
+                <Slider Grid.Row="1" Minimum="-180" Maximum="180" AutoToolTipPlacement="BottomRight" TickFrequency="90"
+                        IsSnapToTickEnabled="True" TickPlacement="Both" Value="{Binding RotationDegrees}" />
+                <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" Grid.Row="2" />
+            </Grid>
+        </GroupBox>
+
+        <!-- COL 1 -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ROW 0 -->
+            <GroupBox Header="Image feed"
+                      Grid.Row="0">
+                <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top"
+                          SelectedItem="{Binding SelectedImageFeed}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
+
+            <!-- ROW 1 -->
+            <GroupBox Header="Detection view" Grid.Row="1">
+                <Image Source="{Binding FilteredPreviewImage, Converter={StaticResource BitmapValueConverter}}" />
+            </GroupBox>
+
+            <!-- ROW 2 -->
+            <GroupBox Header="Set filter" Grid.Row="2">
+                <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:SetFilter}">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
+
+            <!-- ROW 3 -->
+            <GroupBox Header="Detected cards" Grid.Row="3">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ListBox ItemsSource="{Binding DetectedCardsView}"
+                             SelectedItem="{Binding SelectedDetectedCard}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:IdentifiedCardCounter}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="+"
+                                            Command="{Binding DataContext.Commands[Add], ElementName=ThisWindow}"
+                                            CommandParameter="{Binding}" />
+                                    <TextBlock Text="{Binding Card.Name}" />
+                                    <TextBlock Text="," />
+                                    <TextBlock Text="{Binding Card.Set.Name}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <CheckBox Content="Foil" IsChecked="{Binding IsFoil}" Grid.Row="1" />
+                    <Grid Grid.Row="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
+                        <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
+                        <Button Content="Open Collection" Grid.Column="2" Click="OpenCollection_OnClick" />
+                    </Grid>
+                </Grid>
+
+            </GroupBox>
+        </Grid>
+    </Grid>
+</Window>

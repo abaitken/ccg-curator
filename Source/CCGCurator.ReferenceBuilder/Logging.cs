@@ -5,6 +5,7 @@ namespace CCGCurator.ReferenceBuilder
     class Logging
     {
         private readonly StreamWriter writer;
+
         public Logging()
         {
             var logFileName = "collection.log";

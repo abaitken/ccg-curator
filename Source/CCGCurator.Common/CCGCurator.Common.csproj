@@ -54,7 +54,7 @@
     </Compile>
     <Compile Include="EnumerationBooleanValueConverter.cs" />
     <Compile Include="FileSystemHelper.cs" />
-    <Compile Include="pHash.cs" />
+    <Compile Include="phash\pHash.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TemporaryFileManager.cs" />
     <Compile Include="ViewModel.cs" />
@@ -66,19 +66,19 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\Libs\phash\jpeg62.dll">
-      <Link>jpeg62.dll</Link>
+      <Link>phash\jpeg62.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="..\..\Libs\phash\libpng12.dll">
-      <Link>libpng12.dll</Link>
+      <Link>phash\libpng12.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="..\..\Libs\phash\pHash.dll">
-      <Link>pHash.dll</Link>
+      <Link>phash\pHash.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="..\..\Libs\phash\zlib1.dll">
-      <Link>zlib1.dll</Link>
+      <Link>phash\zlib1.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

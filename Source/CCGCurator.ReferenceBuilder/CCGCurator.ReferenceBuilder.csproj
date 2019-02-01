@@ -100,39 +100,34 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AddAction.cs" />
-    <Compile Include="CardImageSource.cs" />
-    <Compile Include="DataAction.cs" />
-    <Compile Include="DeleteAction.cs" />
-    <Compile Include="DiskImageSource.cs" />
-    <Compile Include="DualImageSource.cs" />
-    <Compile Include="IDataActionsNotifier.cs" />
-    <Compile Include="ISettings.cs" />
-    <Compile Include="Logging.cs" />
-    <Compile Include="MainWindowViewModel.cs" />
-    <Compile Include="RemoteCardData.cs" />
-    <Compile Include="SetInfo.cs" />
-    <Compile Include="Synchronous.cs" />
-    <Compile Include="ViewModelState.cs" />
-    <Compile Include="WebImageSource.cs" />
-    <Compile Include="ReferenceBuilderWorker.cs" />
-    <Page Include="MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Compile Include="..\Include\ProductVersionInfo.cs">
       <Link>ProductVersionInfo.cs</Link>
     </Compile>
+    <Compile Include="Actions\AddAction.cs" />
+    <Compile Include="Actions\DataAction.cs" />
+    <Compile Include="Actions\DeleteAction.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
+    <Compile Include="IDataActionsNotifier.cs" />
+    <Compile Include="ISettings.cs" />
+    <Compile Include="Logging.cs" />
+    <Compile Include="ReferenceBuilderWorker.cs" />
+    <Compile Include="Synchronous.cs" />
+    <Compile Include="Views\Main\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Views\Main\MainWindowViewModel.cs" />
+    <Compile Include="Views\ViewModelState.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\RemoteCardData.cs" />
+    <Compile Include="ImageSources\CardImageSource.cs" />
+    <Compile Include="ImageSources\DiskImageSource.cs" />
+    <Compile Include="ImageSources\DualImageSource.cs" />
+    <Compile Include="ImageSources\WebImageSource.cs" />
+    <Compile Include="Model\SetInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -171,6 +166,12 @@
       <Project>{0048e961-d2b5-4a64-8002-544ef4bc4ce7}</Project>
       <Name>CCGCurator.Data</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="Views\Main\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.109.2\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.109.2\build\net46\System.Data.SQLite.Core.targets')" />

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CCGCurator
+﻿namespace CCGCurator
 {
     interface ISettings
     {
@@ -12,13 +6,11 @@ namespace CCGCurator
         int RotationDegrees { get; set; }
         void Save();
     }
-
 }
 
 namespace CCGCurator.Properties
 {
     partial class Settings : ISettings
     {
-
     }
 }

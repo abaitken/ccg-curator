@@ -2,7 +2,6 @@
 {
     class ImageFeed
     {
-
         public ImageFeed(string name, int filterIndex)
         {
             Name = name;

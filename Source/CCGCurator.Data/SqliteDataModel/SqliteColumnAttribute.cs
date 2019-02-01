@@ -6,11 +6,6 @@ namespace CCGCurator.Data
     [AttributeUsage(AttributeTargets.Property)]
     public class SqliteColumnAttribute : Attribute
     {
-        public bool Nullable { get; }
-        public string Name { get; }
-        public Type CustomBehaviour { get; }
-        public int Size { get; }
-
         public SqliteColumnAttribute(string name, bool nullable = true, int size = 255, Type customBehaviour = null)
             : this(nullable, size)
         {
@@ -23,6 +18,11 @@ namespace CCGCurator.Data
             Nullable = nullable;
             Size = size;
         }
+
+        public bool Nullable { get; }
+        public string Name { get; }
+        public Type CustomBehaviour { get; }
+        public int Size { get; }
 
         public string ResolveName(PropertyInfo property)
         {
