@@ -1,6 +1,6 @@
-﻿using CCGCurator.Data;
+﻿using CCGCurator.Data.Model;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.Model
 {
     internal class SetInfo
     {

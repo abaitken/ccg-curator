@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace CCGCurator
+namespace CCGCurator.Views.Collection
 {
     /// <summary>
     ///     Interaction logic for CollectionWindow.xaml

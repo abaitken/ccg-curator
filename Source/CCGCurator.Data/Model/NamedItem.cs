@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using CCGCurator.Data.SqliteDataModel;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.Model
 {
     [DebuggerDisplay("{Name}")]
     public abstract class NamedItem

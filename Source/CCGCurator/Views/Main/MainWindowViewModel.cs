@@ -1,29 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Data;
 using System.Windows.Input;
 using CCGCurator.Common;
 using CCGCurator.Data;
-using CCGCurator.Views;
+using CCGCurator.Data.Model;
+using CCGCurator.Data.PersonalCollection;
+using CCGCurator.Data.ReferenceData;
+using CCGCurator.Views.Collection;
+using CCGCurator.Views.CommandModel;
 using CCGCurator.Views.DetectionPreview;
+using CCGCurator.Views.Settings;
 
-namespace CCGCurator
+namespace CCGCurator.Views.Main
 {
     internal class MainWindowViewModel : ViewModel
     {
         private readonly ImageCapture imageCapture;
         private CardDetection cardDetection;
-        private IDictionary<string, ActionCommand> commands;
-        private ICollectionView detectedCardsView;
+        private IDictionary<string, CommandModelBase> commands;
         private bool isFoil;
         private Bitmap previewImage;
         public List<Card> referenceCards = new List<Card>();
-        private IdentifiedCardCounter selectedIdentifiedCardCounter;
         private SetFilter selectedSetFilter;
         private IEnumerable<SetFilter> setFilters;
         private ViewModelState viewModelState;
@@ -31,7 +32,6 @@ namespace CCGCurator
 
         public MainWindowViewModel()
         {
-            DetectedCards = new List<IdentifiedCardCounter>();
             imageCapture = new ImageCapture();
             imageCapture.ImageCaptured += ImageCapture_ImageCaptured;
         }
@@ -56,15 +56,13 @@ namespace CCGCurator
             get => setFilters;
             set
             {
-                if (setFilters == value)
-                    return;
-
                 setFilters = value;
                 NotifyPropertyChanged();
             }
         }
 
-        private List<IdentifiedCardCounter> DetectedCards { get; set; }
+        private List<IdentifiedCardCounter> DetectedCards { get; set; } = new List<IdentifiedCardCounter>();
+        private List<Card> IgnoreCards { get; set; } = new List<Card>();
 
         public Bitmap PreviewImage
         {
@@ -75,19 +73,6 @@ namespace CCGCurator
                     return;
 
                 previewImage = value;
-                NotifyPropertyChanged();
-            }
-        }
-
-        public ICollectionView DetectedCardsView
-        {
-            get => detectedCardsView;
-            set
-            {
-                if (detectedCardsView == value)
-                    return;
-
-                detectedCardsView = value;
                 NotifyPropertyChanged();
             }
         }
@@ -105,7 +90,7 @@ namespace CCGCurator
             }
         }
 
-        public IDictionary<string, ActionCommand> Commands
+        public IDictionary<string, CommandModelBase> Commands
         {
             get => commands;
             set
@@ -115,20 +100,6 @@ namespace CCGCurator
 
                 commands = value;
                 NotifyPropertyChanged();
-            }
-        }
-
-        public IdentifiedCardCounter SelectedIdentifiedCardCounter
-        {
-            get => selectedIdentifiedCardCounter;
-            set
-            {
-                if (selectedIdentifiedCardCounter == value)
-                    return;
-
-                selectedIdentifiedCardCounter = value;
-                NotifyPropertyChanged();
-                RefreshCommands();
             }
         }
 
@@ -160,7 +131,6 @@ namespace CCGCurator
             base.OnViewLoaded(window);
 
             Task.Run(() => { LoadData(); });
-            Task.Run(() => { RecreateDetectedCardsView(); });
 
             Task.Run(() =>
             {
@@ -170,33 +140,43 @@ namespace CCGCurator
             SetupBindings(window);
         }
 
-        private void RecreateDetectedCardsView()
-        {
-            var collectionView = CollectionViewSource.GetDefaultView(DetectedCards);
-            collectionView.SortDescriptions.Add(new SortDescription(IdentifiedCardCounter.OccurrencesPropertyName,
-                ListSortDirection.Descending));
-            DetectedCardsView = collectionView;
-        }
-
         private void SetupBindings(Window window)
         {
-            var commands = new[]
+            var keys = new Dictionary<string, Key>
             {
-                new ActionCommand("Clear", OnClear, new KeyGesture(Key.C, ModifierKeys.Control)),
-                new ActionCommand("Add", OnAdd, /*() => SelectedIdentifiedCardCounter != null, */ new KeyGesture(Key.A, ModifierKeys.Control)),
-                new ActionCommand("DetectionPreview", OnOpenDetectionPreview)
+                { "Reset", Key.R },
+                { "AddCard", Key.Y },
+                { "IgnoreCard", Key.N },
+                { "Foil", Key.F }
             };
-            Commands = commands.ToDictionary(k => k.Key, v => v);
+
+            Commands = new Dictionary<string, CommandModelBase>
+            {
+                { "DetectionPreview" , new ActionCommand(OnOpenDetectionPreview) },
+                { "MyCollection" , new ActionCommand(OpenMyCollection) },
+                { "OpenSettings" , new ActionCommand(OpenSettings) },
+                { "AddCard" , new ActionCommand(OnAdd) },
+                { "Reset" , new ActionCommand(ResetCurrentDetection) },
+                { "IgnoreCard" , new ActionCommand(IgnoreCard) },
+                { "Foil" , new ActionCommand(ToggleFoil) },
+            };
 
             foreach (var command in commands)
             {
-                if(command.KeyGesture != null)
-                    window.InputBindings.Add(command.CreateInputBinding());
-                window.CommandBindings.Add(command.CreateCommandBinding());
+                //if(gestures.TryGetValue(command.Key, out var gesture))
+                //    window.InputBindings.Add(command.Value.CreateInputBinding(gesture));
+                if(keys.TryGetValue(command.Key, out var key))
+                    window.InputBindings.Add(command.Value.CreateKeyBinding(key));
+                window.CommandBindings.Add(command.Value.CreateCommandBinding());
             }
         }
 
-        private void OnOpenDetectionPreview(object obj)
+        private void ToggleFoil()
+        {
+            IsFoil = !IsFoil;
+        }
+
+        private void OnOpenDetectionPreview()
         {
             detectionPreviewWindow = new DetectionPreviewWindow
             {
@@ -205,31 +185,54 @@ namespace CCGCurator
             detectionPreviewWindow.Closing += (sender, args) => detectionPreviewWindow = null;
             detectionPreviewWindow.Show();
         }
-
-        private void RefreshCommands()
+        
+        private void OpenMyCollection()
         {
-            //foreach (var command in Commands) command.Value.RaiseCanExecuteChanged();
+            var collectionWindow = new CollectionWindow { Owner = View };
+            collectionWindow.Show();
         }
 
-        private void OnAdd(object parameter)
+        private void OpenSettings()
         {
-            if (SelectedIdentifiedCardCounter == null && parameter == null)
+            var settingsWindow = new SettingsWindow { Owner = View };
+            var result = settingsWindow.ShowDialog();
+            if (result.HasValue && result.Value)
+                ReloadSettings();
+        }
+
+        private void OnAdd()
+        {
+            var topRankedDetection = TopRankedDetection;
+            if (topRankedDetection == null)
                 return;
 
             var applicationSettings = new ApplicationSettings();
             var collectionData = new CardCollection(applicationSettings.CollectionDataPath);
-            var detectedCard = (IdentifiedCardCounter) parameter ?? SelectedIdentifiedCardCounter;
-            var collectedCard = new CollectedCard(Guid.NewGuid(), detectedCard.Card, CardQuality.Unspecified, IsFoil);
+            var collectedCard = new CollectedCard(Guid.NewGuid(), topRankedDetection, CardQuality.Unspecified, IsFoil);
             collectionData.Add(collectedCard);
             collectionData.Close();
-            OnClear(null);
+            ResetCurrentDetection();
             IsFoil = false;
         }
 
-        private void OnClear(object obj)
+        private void IgnoreCard()
+        {
+            var topRankedDetection = TopRankedDetection;
+            if (topRankedDetection == null)
+                return;
+            IgnoreCards.Add(topRankedDetection);
+
+            var itemToRemove = DetectedCards.FirstOrDefault(i => i.Card == topRankedDetection);
+            if (itemToRemove != null)
+                DetectedCards.Remove(itemToRemove);
+            NotifyPropertyChanged(nameof(TopRankedDetection));
+        }
+
+        private void ResetCurrentDetection()
         {
             DetectedCards = new List<IdentifiedCardCounter>();
-            RecreateDetectedCardsView();
+            IgnoreCards = new List<Card>();
+            NotifyPropertyChanged(nameof(TopRankedDetection));
         }
 
         private void StopCapturing()
@@ -259,10 +262,10 @@ namespace CCGCurator
             var captured = e.CapturedImage;
             var fromSet = SelectedSetFilter ?? SetFilter.All;
 
-            var cards = cardDetection.Detect(captured, out var greyscaleImage);
+            var detectedCards = cardDetection.Detect(captured, out var greyscaleImage);
 
             var cardIdentification = new CardIdentification();
-            var identifiedCards = cardIdentification.Identify(cards, referenceCards, fromSet);
+            var identifiedCards = cardIdentification.Identify(detectedCards, referenceCards, fromSet, IgnoreCards);
 
             PresentPreviewImage(identifiedCards, captured);
             PresentDetectionImage(identifiedCards, greyscaleImage);
@@ -283,7 +286,7 @@ namespace CCGCurator
             }
             else
             {
-                PreviewImage = imageTools.DrawCardNames(identifiedCards, captured);
+                PreviewImage = imageTools.DrawCardNames(new[]{ identifiedCards.First() }, captured);
             }
         }
 
@@ -314,8 +317,28 @@ namespace CCGCurator
                 else
                     DetectedCards.Add(item);
             }
+            NotifyPropertyChanged(nameof(TopRankedDetection));
+        }
 
-            Application.Current.Dispatcher.Invoke(() => { DetectedCardsView.Refresh(); });
+        public Card TopRankedDetection
+        {
+            get
+            {
+                if (DetectedCards.Count == 0)
+                    return null;
+
+                int maxOccurence = 0;
+                Card topRankCard = null;
+                foreach (var card in DetectedCards)
+                {
+                    if (topRankCard != null && card.Occurrences <= maxOccurence)
+                        continue;
+                    maxOccurence = card.Occurrences;
+                    topRankCard = card.Card;
+                }
+
+                return topRankCard;
+            }
         }
 
         private void LoadData()
@@ -338,7 +361,7 @@ namespace CCGCurator
             });
         }
 
-        public void ReloadSettings()
+        private void ReloadSettings()
         {
             if (Settings.WebcamIndex != imageCapture.ImageFeed.FilterIndex)
                 StartCapturing();

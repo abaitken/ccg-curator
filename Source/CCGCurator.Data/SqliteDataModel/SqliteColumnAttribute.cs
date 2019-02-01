@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.SqliteDataModel
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class SqliteColumnAttribute : Attribute

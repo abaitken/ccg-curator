@@ -2,11 +2,14 @@
 using System.Data.SQLite;
 using System.Net;
 using System.Threading.Tasks;
-using CCGCurator.Common;
-using CCGCurator.Data;
+using CCGCurator.Common.phash;
+using CCGCurator.Data.Model;
+using CCGCurator.Data.ReferenceData;
+using CCGCurator.ReferenceBuilder.Data;
+using CCGCurator.ReferenceBuilder.ImageSources;
 using Newtonsoft.Json;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.Actions
 {
     internal class AddAction : DataAction
     {

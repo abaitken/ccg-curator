@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.Model
 {
     public class SetEqualityComparer : IEqualityComparer<Set>
     {

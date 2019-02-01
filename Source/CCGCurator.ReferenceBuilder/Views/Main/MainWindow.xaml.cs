@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.Views.Main
 {
     /// <summary>
     ///     Interaction logic for MainWindow.xaml

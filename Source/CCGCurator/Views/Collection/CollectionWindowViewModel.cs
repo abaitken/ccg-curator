@@ -5,8 +5,10 @@ using System.Windows;
 using System.Windows.Data;
 using CCGCurator.Common;
 using CCGCurator.Data;
+using CCGCurator.Data.Model;
+using CCGCurator.Data.PersonalCollection;
 
-namespace CCGCurator
+namespace CCGCurator.Views.Collection
 {
     class CollectionWindowViewModel : ViewModel
     {

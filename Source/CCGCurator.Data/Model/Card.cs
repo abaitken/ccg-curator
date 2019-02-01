@@ -1,4 +1,6 @@
-﻿namespace CCGCurator.Data
+﻿using CCGCurator.Data.SqliteDataModel;
+
+namespace CCGCurator.Data.Model
 {
     [SqliteTable("cards")]
     public class Card : NamedItem

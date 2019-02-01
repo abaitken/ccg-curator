@@ -1,6 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using CCGCurator.Data;
+using CCGCurator.Data.Model;
+using CCGCurator.Data.ReferenceData;
+using CCGCurator.ReferenceBuilder.Actions;
+using CCGCurator.ReferenceBuilder.Data;
+using CCGCurator.ReferenceBuilder.ImageSources;
 
 namespace CCGCurator.ReferenceBuilder
 {

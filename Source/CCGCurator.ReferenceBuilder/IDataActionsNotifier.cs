@@ -1,4 +1,5 @@
 ﻿using CCGCurator.Data;
+using CCGCurator.Data.Model;
 
 namespace CCGCurator.ReferenceBuilder
 {

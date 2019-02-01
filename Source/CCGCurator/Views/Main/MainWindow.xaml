@@ -1,4 +1,4 @@
-﻿<Window x:Class="CCGCurator.MainWindow" x:ClassModifier="internal"
+﻿<Window x:Class="CCGCurator.Views.Main.MainWindow" x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -7,11 +7,13 @@
         xmlns:data="clr-namespace:CCGCurator.Data;assembly=CCGCurator.Data"
         xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:common="clr-namespace:CCGCurator.Common;assembly=CCGCurator.Common"
+        xmlns:views="clr-namespace:CCGCurator.Views"
+        xmlns:main="clr-namespace:CCGCurator.Views.Main"
         mc:Ignorable="d"
         x:Name="ThisWindow"
         Title="CCG Curator" Height="450" Width="800">
     <Window.Resources>
-        <local:BitmapValueConverter x:Key="BitmapValueConverter" />
+        <views:BitmapValueConverter x:Key="BitmapValueConverter" />
         <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
 
         <Style TargetType="FrameworkElement">
@@ -46,14 +48,18 @@
         </Style>
     </Window.Resources>
     <Grid
-        IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static local:ViewModelState.Ready}}">
+        IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static views:ViewModelState.Ready}}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <!-- COL 0 -->
         <GroupBox Header="Preview">
-            <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
+            <Grid>
+                <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
+                <main:OutlinedTextBlock Text="{Binding TopRankedDetection.Name}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="20" Stroke="Black" Fill="White" StrokeThickness="2" />
+            </Grid>
         </GroupBox>
 
         <!-- COL 1 -->
@@ -67,7 +73,7 @@
             <GroupBox Header="Set filter" Grid.Row="0">
                 <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}">
                     <ComboBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type local:SetFilter}">
+                        <DataTemplate DataType="{x:Type main:SetFilter}">
                             <TextBlock Text="{Binding Name}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
@@ -75,41 +81,11 @@
             </GroupBox>
 
             <!-- ROW 1 -->
-            <GroupBox Header="Detected cards" Grid.Row="1">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <ListBox ItemsSource="{Binding DetectedCardsView}"
-                             SelectedItem="{Binding SelectedDetectedCard}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type local:IdentifiedCardCounter}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="+"
-                                            Command="{Binding DataContext.Commands[Add], ElementName=ThisWindow}"
-                                            CommandParameter="{Binding}" />
-                                    <TextBlock Text="{Binding Card.Name}" />
-                                    <TextBlock Text="," />
-                                    <TextBlock Text="{Binding Card.Set.Name}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <CheckBox Content="Foil" IsChecked="{Binding IsFoil}" Grid.Row="1" />
-                    <StackPanel Grid.Row="3">
-                        <Button Content="Add" Command="{Binding Commands[Add]}" />
-                        <Button Content="Clear" Command="{Binding Commands[Clear]}" />
-                        <Button Content="My Collection" Click="OpenCollection_OnClick" />
-                        <Button Content="Settings" Click="Settings_OnClick" />
-                        <Button Content="Detection Preview" Command="{Binding Commands[DetectionPreview]}" />
-                    </StackPanel>
-                </Grid>
-
-            </GroupBox>
+            <StackPanel Grid.Row="1">
+                <Button Content="My Collection" Command="{Binding Commands[MyCollection]}" />
+                <Button Content="Settings" Command="{Binding Commands[OpenSettings]}" />
+                <Button Content="Detection Preview" Command="{Binding Commands[DetectionPreview]}" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

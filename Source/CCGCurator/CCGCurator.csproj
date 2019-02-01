@@ -112,12 +112,15 @@
     <Compile Include="ImageCapture.cs" />
     <Compile Include="ImageFeed.cs" />
     <Compile Include="ISettings.cs" />
-    <Compile Include="Views\ActionCommand.cs" />
+    <Compile Include="Properties\SettingsPart.cs" />
     <Compile Include="Views\BitmapValueConverter.cs" />
     <Compile Include="Views\Collection\CollectionWindow.xaml.cs">
       <DependentUpon>CollectionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Collection\CollectionWindowViewModel.cs" />
+    <Compile Include="Views\CommandModel\ActionCommand.cs" />
+    <Compile Include="Views\CommandModel\CommandModel.cs" />
+    <Compile Include="Views\CommandModel\CommandModelBase.cs" />
     <Compile Include="Views\DetectionPreview\DetectionPreviewWindow.xaml.cs">
       <DependentUpon>DetectionPreviewWindow.xaml</DependentUpon>
     </Compile>
@@ -129,6 +132,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Main\MainWindowViewModel.cs" />
+    <Compile Include="Views\Main\OutlinedTextBlock.cs" />
     <Compile Include="Views\Main\SetFilter.cs" />
     <Compile Include="Views\Settings\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>

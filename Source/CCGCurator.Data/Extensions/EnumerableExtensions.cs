@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.Extensions
 {
     public static class EnumerableExtensions
     {

@@ -1,11 +1,8 @@
-﻿using System.IO;
-using System.Drawing;
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
-namespace CCGCurator.Common
+namespace CCGCurator.Common.phash
 {
     public class pHash
     {

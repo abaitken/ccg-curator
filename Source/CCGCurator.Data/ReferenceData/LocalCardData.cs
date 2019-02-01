@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using CCGCurator.Data.Model;
+using CCGCurator.Data.SqliteDataModel;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.ReferenceData
 {
     public sealed class LocalCardData : SQLiteData
     {

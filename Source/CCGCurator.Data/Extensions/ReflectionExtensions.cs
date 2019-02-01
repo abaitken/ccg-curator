@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.Extensions
 {
     static class ReflectionExtensions
     {

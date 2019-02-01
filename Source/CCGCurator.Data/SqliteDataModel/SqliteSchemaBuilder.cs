@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using CCGCurator.Data.Extensions;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.SqliteDataModel
 {
     internal class SqliteSchemaBuilder<T>
     {

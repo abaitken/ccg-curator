@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.SqliteDataModel
 {
     public abstract class CustomColumnBehaviour
     {

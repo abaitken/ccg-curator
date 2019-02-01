@@ -3,10 +3,11 @@ using System.IO;
 using System.Net;
 using CCGCurator.Common;
 using CCGCurator.Data;
+using CCGCurator.Data.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.Data
 {
     class RemoteDataFileClient
     {

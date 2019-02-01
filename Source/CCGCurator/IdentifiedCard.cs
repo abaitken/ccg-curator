@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using AForge;
 using CCGCurator.Data;
+using CCGCurator.Data.Model;
 
 namespace CCGCurator
 {

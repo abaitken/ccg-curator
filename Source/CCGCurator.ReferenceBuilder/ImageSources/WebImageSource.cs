@@ -1,8 +1,8 @@
 ﻿using System.Drawing;
 using System.Net;
-using CCGCurator.Data;
+using CCGCurator.Data.Model;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.ImageSources
 {
     internal class WebImageSource : CardImageSource
     {

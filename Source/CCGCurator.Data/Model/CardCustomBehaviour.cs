@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Reflection;
+using CCGCurator.Data.SqliteDataModel;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.Model
 {
     public class CardCustomBehaviour : CustomColumnBehaviour
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using AForge;
 using AForge.Imaging.Filters;
 using Point = System.Drawing.Point;
@@ -76,12 +77,16 @@ namespace CCGCurator.Views
             return cardBitmap;
         }
 
-        public Bitmap DrawCardNames(List<IdentifiedCard> matches, Bitmap captured)
+        public Bitmap DrawCardNames(IEnumerable<IdentifiedCard> matches, Bitmap captured)
         {
+            var identifiedCards = matches.ToList();
+            if (!identifiedCards.Any())
+                return captured;
+
             var resultImage = (Bitmap)captured.Clone();
             var g = Graphics.FromImage(resultImage);
             var font = new Font("Tahoma", 25);
-            foreach (var item in matches)
+            foreach (var item in identifiedCards)
             {
                 var corners = item.Corners;
                 var card = item.Card;

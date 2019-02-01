@@ -1,7 +1,10 @@
 ﻿using System.Data.SQLite;
-using CCGCurator.Data;
+using CCGCurator.Data.Model;
+using CCGCurator.Data.ReferenceData;
+using CCGCurator.ReferenceBuilder.Data;
+using CCGCurator.ReferenceBuilder.ImageSources;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.Actions
 {
     internal class DeleteAction : DataAction
     {

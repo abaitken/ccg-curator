@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
-using CCGCurator.Data;
+using CCGCurator.Data.Model;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.ImageSources
 {
     internal abstract class CardImageSource
     {

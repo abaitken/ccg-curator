@@ -1,4 +1,4 @@
-﻿namespace CCGCurator.Data
+﻿namespace CCGCurator.Data.Model
 {
     public enum CardQuality
     {

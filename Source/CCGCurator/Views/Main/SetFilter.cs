@@ -1,6 +1,7 @@
 ﻿using CCGCurator.Data;
+using CCGCurator.Data.Model;
 
-namespace CCGCurator
+namespace CCGCurator.Views.Main
 {
     internal class SetFilter
     {

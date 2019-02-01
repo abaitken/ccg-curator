@@ -1,4 +1,4 @@
-﻿namespace CCGCurator
+﻿namespace CCGCurator.Views
 {
     enum ViewModelState
     {

@@ -1,6 +1,7 @@
 ﻿using System;
+using CCGCurator.Data.SqliteDataModel;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.Model
 {
     [SqliteTable("sets")]
     public class Set : NamedItem

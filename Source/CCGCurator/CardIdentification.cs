@@ -1,20 +1,24 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using CCGCurator.Common;
+using CCGCurator.Common.phash;
 using CCGCurator.Data;
+using CCGCurator.Data.Model;
+using CCGCurator.Views.Main;
 
 namespace CCGCurator
 {
     class CardIdentification
     {
         public List<IdentifiedCard> Identify(List<DetectedCard> detections, List<Card> referenceCards,
-            SetFilter fromSet)
+            SetFilter fromSet, List<Card> ignoreCards)
         {
             var phash = new pHash();
             var matchedCards = new List<IdentifiedCard>();
             foreach (var detectedCard in detections)
             {
                 var cardHash = phash.ImageHash(detectedCard.CardBitmap);
-                var bestMatch = FindBestMatch(cardHash, referenceCards, fromSet);
+                var bestMatch = FindBestMatch(cardHash, referenceCards, fromSet, ignoreCards);
 
                 if (bestMatch != null)
                 {
@@ -39,7 +43,7 @@ namespace CCGCurator
             return matchedCards;
         }
 
-        private Card FindBestMatch(ulong needle, List<Card> referenceCards, SetFilter fromSet)
+        private Card FindBestMatch(ulong needle, List<Card> referenceCards, SetFilter fromSet, List<Card> ignoreCards)
         {
             Card bestMatch = null;
             var lowestHamming = int.MaxValue;
@@ -49,6 +53,9 @@ namespace CCGCurator
             foreach (var referenceCard in referenceCards)
             {
                 if (fromSet != SetFilter.All && !setComparer.Equals(referenceCard.Set, fromSet.Set))
+                    continue;
+
+                if(ignoreCards.Any() && ignoreCards.Contains(referenceCard))
                     continue;
 
                 var hamming = phash.HammingDistance(referenceCard.pHash, needle);

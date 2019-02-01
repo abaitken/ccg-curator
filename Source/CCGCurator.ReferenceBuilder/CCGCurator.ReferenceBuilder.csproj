@@ -113,6 +113,7 @@
     <Compile Include="IDataActionsNotifier.cs" />
     <Compile Include="ISettings.cs" />
     <Compile Include="Logging.cs" />
+    <Compile Include="Properties\SettingsPart.cs" />
     <Compile Include="ReferenceBuilderWorker.cs" />
     <Compile Include="Synchronous.cs" />
     <Compile Include="Views\Main\MainWindow.xaml.cs">

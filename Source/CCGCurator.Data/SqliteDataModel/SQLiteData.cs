@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.SqliteDataModel
 {
     public abstract class SQLiteData
     {

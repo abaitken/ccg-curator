@@ -6,10 +6,3 @@
         void Save();
     }
 }
-
-namespace CCGCurator.ReferenceBuilder.Properties
-{
-    partial class Settings : ISettings
-    {
-    }
-}

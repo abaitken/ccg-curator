@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using CCGCurator.Data;
+using CCGCurator.Data.Extensions;
 
 namespace CCGCurator
 {
@@ -29,13 +30,5 @@ namespace CCGCurator
 
             return currentValue;
         }
-    }
-}
-
-namespace CCGCurator.Properties
-{
-    partial class Settings : ISettings
-    {
-        
     }
 }

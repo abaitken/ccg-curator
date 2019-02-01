@@ -1,9 +1,9 @@
 ﻿using System.Drawing;
 using System.IO;
 using CCGCurator.Common;
-using CCGCurator.Data;
+using CCGCurator.Data.Model;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.ImageSources
 {
     internal class DiskImageSource : CardImageSource
     {

@@ -1,9 +1,9 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using CCGCurator.Data;
+using CCGCurator.Data.Model;
 
-namespace CCGCurator.ReferenceBuilder
+namespace CCGCurator.ReferenceBuilder.ImageSources
 {
     internal class DualImageSource : CardImageSource
     {

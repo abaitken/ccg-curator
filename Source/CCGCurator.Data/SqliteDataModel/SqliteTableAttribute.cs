@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CCGCurator.Data
+namespace CCGCurator.Data.SqliteDataModel
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class SqliteTableAttribute : Attribute
