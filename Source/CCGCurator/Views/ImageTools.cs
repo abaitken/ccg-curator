@@ -46,7 +46,7 @@ namespace CCGCurator.Views
             return greyscaleImage;
         }
 
-        public Bitmap DrawDetectionBox(Bitmap captured, List<DetectedCard> cards)
+        public Bitmap DrawDetectionBox(Bitmap captured, List<IdentifiedCard> cards)
         {
             var shapeDetectedImage = new Bitmap(captured.Width, captured.Height, PixelFormat.Format24bppRgb);
             var g = Graphics.FromImage(shapeDetectedImage);

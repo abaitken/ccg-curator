@@ -90,7 +90,8 @@ namespace CCGCurator
 
                 detectedCards.Add(card);
             }
-            detectionImage = imageTools.DrawDetectionBox(greyscaleImage, detectedCards);
+
+            detectionImage = greyscaleImage;
             return detectedCards;
         }
 

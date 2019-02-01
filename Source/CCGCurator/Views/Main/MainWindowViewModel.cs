@@ -259,14 +259,13 @@ namespace CCGCurator
             var captured = e.CapturedImage;
             var fromSet = SelectedSetFilter ?? SetFilter.All;
 
-            var cards = cardDetection.Detect(captured, out var filtered);
+            var cards = cardDetection.Detect(captured, out var greyscaleImage);
 
             var cardIdentification = new CardIdentification();
             var identifiedCards = cardIdentification.Identify(cards, referenceCards, fromSet);
 
             PresentPreviewImage(identifiedCards, captured);
-            PresentDetectionImage(filtered);
-
+            PresentDetectionImage(identifiedCards, greyscaleImage);
             UpdateDetectedCards(identifiedCards);
         }
 
@@ -288,12 +287,15 @@ namespace CCGCurator
             }
         }
 
-        private void PresentDetectionImage(Bitmap filtered)
+        private void PresentDetectionImage(List<IdentifiedCard> identifiedCards, Bitmap greyscaleImage)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                if (detectionPreviewWindow != null)
-                    detectionPreviewWindow.ViewModel.FilteredPreviewImage = filtered;
+                if (detectionPreviewWindow == null)
+                    return;
+                var imageTools = new ImageTools();
+                var detectionImage = imageTools.DrawDetectionBox(greyscaleImage, identifiedCards);
+                detectionPreviewWindow.ViewModel.FilteredPreviewImage = detectionImage;
             });
         }
 
