@@ -26,9 +26,9 @@ namespace CCGCurator
         public double BlobWidth { get; set; } = 125;
         public double DetectionThreshold { get; set; } = 10000;
 
-        private List<DetectedCard> DetectCards(Bitmap bitmap, out Bitmap detectionImage)
+        public List<DetectedCard> Detect(Bitmap bitmap, out Bitmap detectionImage)
         {
-            var magicCards = new List<DetectedCard>();
+            var detectedCards = new List<DetectedCard>();
             // Greyscale
             var greyscaleImage = Grayscale.CommonAlgorithms.BT709.Apply(bitmap);
 
@@ -115,11 +115,11 @@ namespace CCGCurator
                     cardBitmap = cardBitmap
                 };
 
-                magicCards.Add(card);
+                detectedCards.Add(card);
             }
 
-            detectionImage = CreateDetectionImage(greyscaleImage, magicCards);
-            return magicCards;
+            detectionImage = CreateDetectionImage(greyscaleImage, detectedCards);
+            return detectedCards;
         }
 
         private Point[] ToPointsArray(List<IntPoint> points)
@@ -182,34 +182,50 @@ namespace CCGCurator
             return result;
         }
 
-        private Card FindBestMatch(ulong needle, List<Card> referenceCards, SetFilter fromSet)
+        private Bitmap CreateDetectionImage(Bitmap captured, List<DetectedCard> cards)
         {
-            Card bestMatch = null;
-            var lowestHamming = int.MaxValue;
+            var shapeDetectedImage = new Bitmap(captured.Width, captured.Height, PixelFormat.Format24bppRgb);
+            var g = Graphics.FromImage(shapeDetectedImage);
+            g.DrawImage(captured, 0, 0);
 
-            var phash = new pHash();
-            var setComparer = new SetEqualityComparer();
-            foreach (var referenceCard in referenceCards)
-            {
-                if(fromSet != SetFilter.All && !setComparer.Equals(referenceCard.Set, fromSet.Set))
-                    continue;
+            var pen = new Pen(Color.Red, 5);
 
-                var hamming = phash.HammingDistance(referenceCard.pHash, needle);
-                if (hamming < lowestHamming)
-                {
-                    lowestHamming = hamming;
-                    bestMatch = referenceCard;
-                }
-            }
+            foreach (var card in cards) g.DrawPolygon(pen, ToPointsArray(card.corners));
 
-            return bestMatch;
+            pen.Dispose();
+            g.Dispose();
+
+            return shapeDetectedImage;
         }
+    }
 
-        private List<Tuple<DetectedCard, Card>> MatchCards(List<DetectedCard> detections, List<Card> referenceCards,
+    internal class DetectedCard
+    {
+        public Bitmap cardBitmap;
+        public List<IntPoint> corners;
+    }
+
+    internal class IdentifiedCard
+    {
+        public List<IntPoint> corners;
+        public Card card;
+
+        public IdentifiedCard(DetectedCard detectedCard, Card bestMatch)
+        {
+            card = bestMatch;
+            corners = detectedCard.corners;
+        }
+    }
+
+    class CardIdentification
+    {
+
+
+        public List<IdentifiedCard> Identify(List<DetectedCard> detections, List<Card> referenceCards,
             SetFilter fromSet)
         {
             var phash = new pHash();
-            var matchedCards = new List<Tuple<DetectedCard, Card>>();
+            var matchedCards = new List<IdentifiedCard>();
             foreach (var detectedCard in detections)
             {
                 var cardHash = phash.ImageHash(detectedCard.cardBitmap);
@@ -231,68 +247,34 @@ namespace CCGCurator
                         Console.WriteLine("DEBUG: "+ text);
                     }
 #endif
-                    matchedCards.Add(new Tuple<DetectedCard, Card>(detectedCard, bestMatch));
+                    matchedCards.Add(new IdentifiedCard(detectedCard, bestMatch));
                 }
             }
 
             return matchedCards;
         }
 
-        public List<Card> Process(Bitmap captured, out Bitmap greyscaleDetectionImage, out Bitmap previewImage,
-            List<Card> referenceCards, SetFilter fromSet)
+        private Card FindBestMatch(ulong needle, List<Card> referenceCards, SetFilter fromSet)
         {
-            var cards = DetectCards(captured, out greyscaleDetectionImage);
-            var matchedCards = MatchCards(cards, referenceCards, fromSet);
-            previewImage = CreatePreviewImage(matchedCards, captured);
+            Card bestMatch = null;
+            var lowestHamming = int.MaxValue;
 
-            var result = from item in matchedCards
-                select item.Item2;
-
-            return result.ToList();
-        }
-
-        private Bitmap CreatePreviewImage(List<Tuple<DetectedCard, Card>> matches, Bitmap captured)
-        {
-            var resultImage = (Bitmap) captured.Clone();
-            var g = Graphics.FromImage(resultImage);
-            var font = new Font("Tahoma", 25);
-            foreach (var item in matches)
+            var phash = new pHash();
+            var setComparer = new SetEqualityComparer();
+            foreach (var referenceCard in referenceCards)
             {
-                var detection = item.Item1;
-                var card = item.Item2;
-                //ContrastCorrection filter = new ContrastCorrection(15);
-                //filter.ApplyInPlace(card.cardArtBitmap);
-                g.DrawString(card.Name, font, Brushes.Black,
-                    new PointF(detection.corners[0].X - 29, detection.corners[0].Y - 39));
-                g.DrawString(card.Name, font, Brushes.Red,
-                    new PointF(detection.corners[0].X - 30, detection.corners[0].Y - 40));
+                if (fromSet != SetFilter.All && !setComparer.Equals(referenceCard.Set, fromSet.Set))
+                    continue;
+
+                var hamming = phash.HammingDistance(referenceCard.pHash, needle);
+                if (hamming < lowestHamming)
+                {
+                    lowestHamming = hamming;
+                    bestMatch = referenceCard;
+                }
             }
 
-            g.Dispose();
-
-            return resultImage;
-        }
-
-        private Bitmap CreateDetectionImage(Bitmap captured, List<DetectedCard> cards)
-        {
-            var shapeDetectedImage = new Bitmap(captured.Width, captured.Height, PixelFormat.Format24bppRgb);
-            var g = Graphics.FromImage(shapeDetectedImage);
-            g.DrawImage(captured, 0, 0);
-
-            var pen = new Pen(Color.Red, 5);
-
-            foreach (var card in cards) g.DrawPolygon(pen, ToPointsArray(card.corners));
-
-            pen.Dispose();
-            g.Dispose();
-
-            return shapeDetectedImage;
-        }
-
-        private class DetectedCard
-        {
-            public Bitmap cardBitmap;
-            public List<IntPoint> corners;
+            return bestMatch;
         }
     }
 }

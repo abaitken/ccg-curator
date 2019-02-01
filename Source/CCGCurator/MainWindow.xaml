@@ -136,7 +136,7 @@
                     <ListBox ItemsSource="{Binding DetectedCardsView}"
                              SelectedItem="{Binding SelectedDetectedCard}">
                         <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type local:DetectedCard}">
+                            <DataTemplate DataType="{x:Type local:IdentifiedCardCounter}">
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="+" Command="{Binding DataContext.Commands[Add], ElementName=ThisWindow}" CommandParameter="{Binding}"></Button>
                                     <TextBlock Text="{Binding Card.Name}" />

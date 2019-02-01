@@ -58,7 +58,7 @@ namespace CCGCurator
 
         public MainWindowViewModel()
         {
-            DetectedCards = new List<DetectedCard>();
+            DetectedCards = new List<IdentifiedCardCounter>();
         }
 
         private ISettings Settings => Properties.Settings.Default;
@@ -112,7 +112,7 @@ namespace CCGCurator
             }
         }
 
-        private List<DetectedCard> DetectedCards { get; set; }
+        private List<IdentifiedCardCounter> DetectedCards { get; set; }
 
         public Bitmap PreviewImage
         {
@@ -263,7 +263,7 @@ namespace CCGCurator
         private void RecreateDetectedCardsView()
         {
             var collectionView = CollectionViewSource.GetDefaultView(DetectedCards);
-            collectionView.SortDescriptions.Add(new SortDescription(DetectedCard.OccurrencesPropertyName,
+            collectionView.SortDescriptions.Add(new SortDescription(IdentifiedCardCounter.OccurrencesPropertyName,
                 ListSortDirection.Descending));
             DetectedCardsView = collectionView;
         }
@@ -274,7 +274,7 @@ namespace CCGCurator
             var commands = new[]
             {
                 new ActionCommand("Clear", OnClear, new KeyGesture(Key.C, ModifierKeys.Control)),
-                new ActionCommand("Add", OnAdd, /*() => SelectedDetectedCard != null, */new KeyGesture(Key.A, ModifierKeys.Control))
+                new ActionCommand("Add", OnAdd, /*() => SelectedIdentifiedCardCounter != null, */new KeyGesture(Key.A, ModifierKeys.Control))
             };
             Commands = commands.ToDictionary(k => k.Key, v => v);
 
@@ -301,18 +301,18 @@ namespace CCGCurator
         }
 
 
-        DetectedCard selectedDetectedCard;
+        IdentifiedCardCounter selectedIdentifiedCardCounter;
         private List<CollectedCard> cardCollection;
 
-        public DetectedCard SelectedDetectedCard
+        public IdentifiedCardCounter SelectedIdentifiedCardCounter
         {
-            get { return selectedDetectedCard; }
+            get { return selectedIdentifiedCardCounter; }
             set
             {
-                if (selectedDetectedCard == value)
+                if (selectedIdentifiedCardCounter == value)
                     return;
 
-                selectedDetectedCard = value;
+                selectedIdentifiedCardCounter = value;
                 NotifyPropertyChanged();
                 RefreshCommands();
             }
@@ -325,12 +325,12 @@ namespace CCGCurator
 
         private void OnAdd(object parameter)
         {
-            if (SelectedDetectedCard == null && parameter == null)
+            if (SelectedIdentifiedCardCounter == null && parameter == null)
                 return;
 
             var applicationSettings = new ApplicationSettings();
             var collectionData = new CardCollection(applicationSettings.CollectionDataPath);
-            var detectedCard = (DetectedCard)parameter ?? SelectedDetectedCard;
+            var detectedCard = (IdentifiedCardCounter)parameter ?? SelectedIdentifiedCardCounter;
             var collectedCard = new CollectedCard(Guid.NewGuid(), detectedCard.Card, CardQuality.Unspecified, IsFoil);
             collectionData.Add(collectedCard);
             cardCollection.Add(collectedCard);
@@ -342,7 +342,7 @@ namespace CCGCurator
 
         private void OnClear(object obj)
         {
-            DetectedCards = new List<DetectedCard>();
+            DetectedCards = new List<IdentifiedCardCounter>();
             RecreateDetectedCardsView();
         }
 
@@ -405,23 +405,51 @@ namespace CCGCurator
             {
                 captured = RotateImage(captured);
                 var fromSet = SelectedSetFilter ?? SetFilter.All;
-                var detectedCards = cardDetection.Process(captured, out var filtered, out var preview, referenceCards, fromSet);
+
+                var cards = cardDetection.Detect(captured, out var filtered);
+
+                var cardIdentification = new CardIdentification();
+                var identifiedCards = cardIdentification.Identify(cards, referenceCards, fromSet);
+                var preview = CreatePreviewImage(identifiedCards, captured);
+                
                 FilteredPreviewImage = filtered;
                 PreviewImage = preview;
 
-                UpdateDetectedCards(detectedCards);
+                UpdateDetectedCards(identifiedCards);
             }
         }
 
-        private void UpdateDetectedCards(List<Card> detectedCards)
+        public Bitmap CreatePreviewImage(List<IdentifiedCard> matches, Bitmap captured)
         {
-            if (!detectedCards.Any()) return;
-
-            foreach (var detectedCard in detectedCards)
+            var resultImage = (Bitmap)captured.Clone();
+            var g = Graphics.FromImage(resultImage);
+            var font = new Font("Tahoma", 25);
+            foreach (var item in matches)
             {
-                var existingItem = DetectedCards.FirstOrDefault(i => i.Card == detectedCard);
+                var corners = item.corners;
+                var card = item.card;
+                //ContrastCorrection filter = new ContrastCorrection(15);
+                //filter.ApplyInPlace(card.cardArtBitmap);
+                g.DrawString(card.Name, font, Brushes.Black,
+                    new PointF(corners[0].X - 29, corners[0].Y - 39));
+                g.DrawString(card.Name, font, Brushes.Red,
+                    new PointF(corners[0].X - 30, corners[0].Y - 40));
+            }
+
+            g.Dispose();
+
+            return resultImage;
+        }
+
+        private void UpdateDetectedCards(List<IdentifiedCard> identifiedCards)
+        {
+            if (!identifiedCards.Any()) return;
+
+            foreach (var identifiedCard in identifiedCards)
+            {
+                var existingItem = DetectedCards.FirstOrDefault(i => i.Card == identifiedCard.card);
                 var itemExists = existingItem != null;
-                var item = !itemExists ? new DetectedCard(detectedCard) : existingItem;
+                var item = !itemExists ? new IdentifiedCardCounter(identifiedCard.card) : existingItem;
 
                 if (itemExists)
                     item.Occurrences++;
