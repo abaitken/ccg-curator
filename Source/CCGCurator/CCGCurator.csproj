@@ -118,8 +118,13 @@
       <DependentUpon>CollectionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Collection\CollectionWindowViewModel.cs" />
+    <Compile Include="Views\DetectionPreview\DetectionPreviewWindow.xaml.cs">
+      <DependentUpon>DetectionPreviewWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DetectionPreview\DetectionPreviewWindowViewModel.cs" />
     <Compile Include="Views\ImageExtensions.cs" />
     <Compile Include="Views\Main\IdentifiedCardCounter.cs" />
+    <Compile Include="Views\ImageTools.cs" />
     <Compile Include="Views\Main\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
@@ -179,6 +184,10 @@
     <Page Include="Views\Collection\CollectionWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\DetectionPreview\DetectionPreviewWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Main\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

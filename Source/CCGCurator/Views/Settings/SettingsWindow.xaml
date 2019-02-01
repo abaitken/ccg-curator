@@ -14,6 +14,9 @@
         <Style TargetType="Button">
             <Setter Property="Margin" Value="4" />
         </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
         <Style TargetType="TextBox">
             <Setter Property="Margin" Value="4" />
         </Style>
@@ -41,6 +44,7 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -73,10 +77,12 @@
         </GroupBox>
 
         <!-- ROW 2 -->
+        <CheckBox Content="Zoom into detected card" Grid.Row="2" IsChecked="{Binding ZoomToDetectedCard}" />
+        <!-- ROW 3 -->
         <!-- * -->
 
-        <!-- ROW 3 -->
-        <Grid Grid.Row="3">
+        <!-- ROW 4 -->
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

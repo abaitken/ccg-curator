@@ -7,6 +7,12 @@ namespace CCGCurator
     {
         private readonly Func<bool> canExecute;
 
+        public ActionCommand(string key, Action<object> action)
+            : this(key, action, null)
+        {
+
+        }
+
         public ActionCommand(string key, Action<object> action, KeyGesture keyGesture)
             : this(key, action, () => true, keyGesture)
         {
@@ -40,7 +46,7 @@ namespace CCGCurator
 
         public InputBinding CreateInputBinding()
         {
-            return new KeyBinding(this, KeyGesture);
+            return KeyGesture == null ? null : new KeyBinding(this, KeyGesture);
         }
 
         public CommandBinding CreateCommandBinding()

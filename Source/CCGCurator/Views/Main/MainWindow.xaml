@@ -60,18 +60,11 @@
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="3*" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- ROW 1 -->
-            <GroupBox Header="Detection view" Grid.Row="1">
-                <Image Source="{Binding FilteredPreviewImage, Converter={StaticResource BitmapValueConverter}}" />
-            </GroupBox>
-
-            <!-- ROW 2 -->
-            <GroupBox Header="Set filter" Grid.Row="2">
+            <!-- ROW 0 -->
+            <GroupBox Header="Set filter" Grid.Row="0">
                 <ComboBox ItemsSource="{Binding SetFilters}" SelectedItem="{Binding SelectedSetFilter}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate DataType="{x:Type local:SetFilter}">
@@ -81,8 +74,8 @@
                 </ComboBox>
             </GroupBox>
 
-            <!-- ROW 3 -->
-            <GroupBox Header="Detected cards" Grid.Row="3">
+            <!-- ROW 1 -->
+            <GroupBox Header="Detected cards" Grid.Row="1">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
@@ -107,18 +100,13 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                     <CheckBox Content="Foil" IsChecked="{Binding IsFoil}" Grid.Row="1" />
-                    <Grid Grid.Row="3">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
-                        <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
-                        <Button Content="My Collection" Grid.Column="2" Click="OpenCollection_OnClick" />
-                        <Button Content="Settings" Grid.Column="3" Click="Settings_OnClick" />
-                    </Grid>
+                    <StackPanel Grid.Row="3">
+                        <Button Content="Add" Command="{Binding Commands[Add]}" />
+                        <Button Content="Clear" Command="{Binding Commands[Clear]}" />
+                        <Button Content="My Collection" Click="OpenCollection_OnClick" />
+                        <Button Content="Settings" Click="Settings_OnClick" />
+                        <Button Content="Detection Preview" Command="{Binding Commands[DetectionPreview]}" />
+                    </StackPanel>
                 </Grid>
 
             </GroupBox>

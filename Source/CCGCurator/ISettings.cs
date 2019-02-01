@@ -7,6 +7,7 @@ namespace CCGCurator
     {
         int WebcamIndex { get; set; }
         int RotationDegrees { get; set; }
+        bool ZoomToDetectedCard { get; set; }
         void Save();
     }
 

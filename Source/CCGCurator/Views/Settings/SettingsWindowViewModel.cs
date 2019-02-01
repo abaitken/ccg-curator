@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using CCGCurator.Common;
+using CCGCurator.Data;
 
 namespace CCGCurator.Views.Settings
 {
@@ -50,10 +48,27 @@ namespace CCGCurator.Views.Settings
             }
         }
 
+
+        bool zoomToDetectedCard;
+        public bool ZoomToDetectedCard
+        {
+            get => zoomToDetectedCard;
+            set
+            {
+                if (zoomToDetectedCard == value)
+                    return;
+
+                zoomToDetectedCard = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
         private ISettings Settings => Properties.Settings.Default;
 
         public void SaveSettings()
         {
+            Settings.ZoomToDetectedCard = ZoomToDetectedCard;
             Settings.RotationDegrees = RotationDegrees;
             Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
             Settings.Save();
@@ -67,6 +82,7 @@ namespace CCGCurator.Views.Settings
             {
                 ImageFeeds = ImageCapture.ImageFeeds();
                 RotationDegrees = SettingsHelper.ValidateRotation(Settings.RotationDegrees);
+                ZoomToDetectedCard = Settings.ZoomToDetectedCard;
                 SelectedImageFeed =
                     imageFeeds[SettingsHelper.ValidateWebCamIndex(Settings.WebcamIndex, imageFeeds.Count)];
             });

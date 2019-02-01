@@ -20,8 +20,11 @@ namespace CCGCurator.Common
             if(viewLoaded)
                 return;
             viewLoaded = true;
+            View = window;
             OnViewLoaded(window);
         }
+
+        protected Window View { get; private set; }
 
         protected virtual void OnViewLoaded(Window window)
         {

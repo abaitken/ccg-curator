@@ -46,5 +46,17 @@ namespace CCGCurator.Properties {
                 this["RotationDegrees"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ZoomToDetectedCard {
+            get {
+                return ((bool)(this["ZoomToDetectedCard"]));
+            }
+            set {
+                this["ZoomToDetectedCard"] = value;
+            }
+        }
     }
 }

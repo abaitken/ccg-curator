@@ -9,6 +9,8 @@ using System.Windows.Data;
 using System.Windows.Input;
 using CCGCurator.Common;
 using CCGCurator.Data;
+using CCGCurator.Views;
+using CCGCurator.Views.DetectionPreview;
 
 namespace CCGCurator
 {
@@ -18,7 +20,6 @@ namespace CCGCurator
         private CardDetection cardDetection;
         private IDictionary<string, ActionCommand> commands;
         private ICollectionView detectedCardsView;
-        private Bitmap filteredPreviewImage;
         private bool isFoil;
         private Bitmap previewImage;
         public List<Card> referenceCards = new List<Card>();
@@ -26,6 +27,7 @@ namespace CCGCurator
         private SetFilter selectedSetFilter;
         private IEnumerable<SetFilter> setFilters;
         private ViewModelState viewModelState;
+        private DetectionPreviewWindow detectionPreviewWindow;
 
         public MainWindowViewModel()
         {
@@ -73,19 +75,6 @@ namespace CCGCurator
                     return;
 
                 previewImage = value;
-                NotifyPropertyChanged();
-            }
-        }
-
-        public Bitmap FilteredPreviewImage
-        {
-            get => filteredPreviewImage;
-            set
-            {
-                if (filteredPreviewImage == value)
-                    return;
-
-                filteredPreviewImage = value;
                 NotifyPropertyChanged();
             }
         }
@@ -194,16 +183,27 @@ namespace CCGCurator
             var commands = new[]
             {
                 new ActionCommand("Clear", OnClear, new KeyGesture(Key.C, ModifierKeys.Control)),
-                new ActionCommand("Add", OnAdd, /*() => SelectedIdentifiedCardCounter != null, */
-                    new KeyGesture(Key.A, ModifierKeys.Control))
+                new ActionCommand("Add", OnAdd, /*() => SelectedIdentifiedCardCounter != null, */ new KeyGesture(Key.A, ModifierKeys.Control)),
+                new ActionCommand("DetectionPreview", OnOpenDetectionPreview)
             };
             Commands = commands.ToDictionary(k => k.Key, v => v);
 
             foreach (var command in commands)
             {
-                window.InputBindings.Add(command.CreateInputBinding());
+                if(command.KeyGesture != null)
+                    window.InputBindings.Add(command.CreateInputBinding());
                 window.CommandBindings.Add(command.CreateCommandBinding());
             }
+        }
+
+        private void OnOpenDetectionPreview(object obj)
+        {
+            detectionPreviewWindow = new DetectionPreviewWindow
+            {
+                Owner = View
+            };
+            detectionPreviewWindow.Closing += (sender, args) => detectionPreviewWindow = null;
+            detectionPreviewWindow.Show();
         }
 
         private void RefreshCommands()
@@ -263,34 +263,38 @@ namespace CCGCurator
 
             var cardIdentification = new CardIdentification();
             var identifiedCards = cardIdentification.Identify(cards, referenceCards, fromSet);
-            var preview = CreatePreviewImage(identifiedCards, captured);
 
-            FilteredPreviewImage = filtered;
-            PreviewImage = preview;
+            PresentPreviewImage(identifiedCards, captured);
+            PresentDetectionImage(filtered);
 
             UpdateDetectedCards(identifiedCards);
         }
 
-        public Bitmap CreatePreviewImage(List<IdentifiedCard> matches, Bitmap captured)
+        private void PresentPreviewImage(List<IdentifiedCard> identifiedCards, Bitmap captured)
         {
-            var resultImage = (Bitmap) captured.Clone();
-            var g = Graphics.FromImage(resultImage);
-            var font = new Font("Tahoma", 25);
-            foreach (var item in matches)
+            var imageTools = new ImageTools();
+
+            if (!identifiedCards.Any())
             {
-                var corners = item.Corners;
-                var card = item.Card;
-                //ContrastCorrection filter = new ContrastCorrection(15);
-                //filter.ApplyInPlace(card.cardArtBitmap);
-                g.DrawString(card.Name, font, Brushes.Black,
-                    new PointF(corners[0].X - 29, corners[0].Y - 39));
-                g.DrawString(card.Name, font, Brushes.Red,
-                    new PointF(corners[0].X - 30, corners[0].Y - 40));
+                PreviewImage = captured;
             }
+            else if (Settings.ZoomToDetectedCard)
+            {
+                PreviewImage = imageTools.GetDetectedCardImage(identifiedCards[0].Corners, captured, 1);
+            }
+            else
+            {
+                PreviewImage = imageTools.DrawCardNames(identifiedCards, captured);
+            }
+        }
 
-            g.Dispose();
-
-            return resultImage;
+        private void PresentDetectionImage(Bitmap filtered)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (detectionPreviewWindow != null)
+                    detectionPreviewWindow.ViewModel.FilteredPreviewImage = filtered;
+            });
         }
 
         private void UpdateDetectedCards(List<IdentifiedCard> identifiedCards)

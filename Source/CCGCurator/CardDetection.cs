@@ -7,6 +7,7 @@ using AForge;
 using AForge.Imaging;
 using AForge.Imaging.Filters;
 using AForge.Math.Geometry;
+using CCGCurator.Views;
 using Point = System.Drawing.Point;
 
 namespace CCGCurator
@@ -26,27 +27,10 @@ namespace CCGCurator
 
         public List<DetectedCard> Detect(Bitmap bitmap, out Bitmap detectionImage)
         {
+            var imageTools = new ImageTools();
             var detectedCards = new List<DetectedCard>();
             // Greyscale
-            var greyscaleImage = Grayscale.CommonAlgorithms.BT709.Apply(bitmap);
-
-            // Contrast - try to sharpen edges
-            //ContrastStretch filter = new ContrastStretch();
-            //filter.ApplyInPlace(filteredBitmap);
-
-            // edge filter 
-            // This filters accepts 8 bpp grayscale images for processing
-
-            //Alternatives:
-            //DifferenceEdgeDetector edgeFilter = new DifferenceEdgeDetector();
-            //HomogenityEdgeDetector filter = new HomogenityEdgeDetector();
-            //CannyEdgeDetector filter = new CannyEdgeDetector( );
-
-            var edgeFilter = new SobelEdgeDetector();
-            edgeFilter.ApplyInPlace(greyscaleImage);
-
-            var threshholdFilter = new Threshold(240); //180
-            threshholdFilter.ApplyInPlace(greyscaleImage);
+            var greyscaleImage = imageTools.GreyscaleEdgeDetectionImage(bitmap);
 
             var bitmapData = greyscaleImage.LockBits(
                 new Rectangle(0, 0, greyscaleImage.Width, greyscaleImage.Height),
@@ -73,10 +57,9 @@ namespace CCGCurator
             for (var i = 0; i < blobs.Length; i++)
             {
                 var edgePoints = blobCounter.GetBlobsEdgePoints(blobs[i]);
-                List<IntPoint> corners;
 
                 // is triangle or quadrilateral
-                if (!shapeChecker.IsConvexPolygon(edgePoints, out corners))
+                if (!shapeChecker.IsConvexPolygon(edgePoints, out var corners))
                     continue;
 
                 var subType = shapeChecker.CheckPolygonSubType(corners);
@@ -96,16 +79,8 @@ namespace CCGCurator
                     continue;
 
                 cardPositions.Add(corners[0]);
-
-                // Extract the card bitmap
-
-                // Debug
-                //var transformFilter = new QuadrilateralTransformation(corners, 600, 800);
-
-                var transformFilter = new QuadrilateralTransformation(corners, Convert.ToInt32(211 * scaleFactor),
-                    Convert.ToInt32(298 * scaleFactor));
-
-                var cardBitmap = transformFilter.Apply(bitmap);
+                
+                var cardBitmap = imageTools.GetDetectedCardImage(corners, bitmap, scaleFactor);
 
                 var card = new DetectedCard
                 {
@@ -115,19 +90,8 @@ namespace CCGCurator
 
                 detectedCards.Add(card);
             }
-
-            detectionImage = CreateDetectionImage(greyscaleImage, detectedCards);
+            detectionImage = imageTools.DrawDetectionBox(greyscaleImage, detectedCards);
             return detectedCards;
-        }
-
-        private Point[] ToPointsArray(List<IntPoint> points)
-        {
-            var array = new Point[points.Count];
-
-            for (int i = 0, n = points.Count; i < n; i++)
-                array[i] = new Point(points[i].X, points[i].Y);
-
-            return array;
         }
 
         private double GetArea(IList<IntPoint> vertices)
@@ -178,22 +142,6 @@ namespace CCGCurator
             }
 
             return result;
-        }
-
-        private Bitmap CreateDetectionImage(Bitmap captured, List<DetectedCard> cards)
-        {
-            var shapeDetectedImage = new Bitmap(captured.Width, captured.Height, PixelFormat.Format24bppRgb);
-            var g = Graphics.FromImage(shapeDetectedImage);
-            g.DrawImage(captured, 0, 0);
-
-            var pen = new Pen(Color.Red, 5);
-
-            foreach (var card in cards) g.DrawPolygon(pen, ToPointsArray(card.Corners));
-
-            pen.Dispose();
-            g.Dispose();
-
-            return shapeDetectedImage;
         }
     }
 }
