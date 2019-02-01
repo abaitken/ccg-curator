@@ -22,12 +22,8 @@ namespace CCGCurator
 {
     internal class MainWindowViewModel : ViewModel
     {
-        private static readonly object captureThreadLocker = new object();
-        private Filters cameraFilters;
-        private Capture capture;
-        private Control captureBox;
+        private readonly ImageCapture imageCapture;
 
-        private bool capturing;
         private CardDetection cardDetection;
 
 
@@ -39,7 +35,7 @@ namespace CCGCurator
 
         private Bitmap filteredPreviewImage;
 
-        private IEnumerable<ImageFeed> imageFeeds;
+        private IList<ImageFeed> imageFeeds;
 
 
         private Bitmap previewImage;
@@ -59,11 +55,13 @@ namespace CCGCurator
         public MainWindowViewModel()
         {
             DetectedCards = new List<IdentifiedCardCounter>();
+            imageCapture = new ImageCapture();
+            imageCapture.ImageCaptured += ImageCapture_ImageCaptured;
         }
 
         private ISettings Settings => Properties.Settings.Default;
 
-        public IEnumerable<ImageFeed> ImageFeeds
+        public IList<ImageFeed> ImageFeeds
         {
             get => imageFeeds;
             set
@@ -185,12 +183,7 @@ namespace CCGCurator
             Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
             Settings.Save();
 
-            // hack - https://stackoverflow.com/questions/38528908/stopping-imediacontrol-never-ends
-            if (!Task.Run(() => StopCapturing()).Wait(TimeSpan.FromSeconds(5)))
-            {
-                MessageBox.Show("Could not stop the capturing stream. The application will now forcibly close.");
-                Environment.FailFast("Could not stop the capturing stream.");
-            }
+            imageCapture.Close();
         }
 
         internal void ViewLoaded(Window window)
@@ -206,19 +199,14 @@ namespace CCGCurator
 
             Task.Run(() =>
             {
-                captureBox = new PictureBox();
-                cameraFilters = new Filters();
-                var imageFeeds = new List<ImageFeed>();
-                for (var i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
-                    imageFeeds.Add(new ImageFeed(cameraFilters.VideoInputDevices[i].Name, i));
-                ImageFeeds = imageFeeds;
+                ImageFeeds = imageCapture.Init();
 
                 var previousIndex = Settings.WebcamIndex;
-                if (previousIndex >= imageFeeds.Count)
+                if (previousIndex >= ImageFeeds.Count)
                     previousIndex = 0;
 
                 RotationDegrees = ValidateRotation(Settings.RotationDegrees);
-                SelectedImageFeed = imageFeeds[previousIndex];
+                SelectedImageFeed = ImageFeeds[previousIndex];
                 ViewModelState = ViewModelState.Ready;
             });
             SetupBindings(window);
@@ -286,16 +274,15 @@ namespace CCGCurator
         }
 
 
-        int rotationDegrees;
         public int RotationDegrees
         {
-            get { return rotationDegrees; }
+            get { return imageCapture.RotationDegrees; }
             set
             {
-                if (rotationDegrees == value)
+                if (imageCapture.RotationDegrees == value)
                     return;
 
-                rotationDegrees = value;
+                imageCapture.RotationDegrees = value;
                 NotifyPropertyChanged();
             }
         }
@@ -346,77 +333,39 @@ namespace CCGCurator
             RecreateDetectedCardsView();
         }
 
-        private Size CalculateCaptureFrameSize(Size maxSize)
-        {
-            var resolutions = new[]
-            {
-                new Size(1920, 1080),
-                new Size(1024, 768),
-                new Size(800, 600),
-                new Size(640, 480)
-            };
-
-            foreach (var resolution in resolutions)
-                if (maxSize.Height >= resolution.Height)
-                    return resolution;
-
-            return resolutions.Last();
-        }
-
         private void StopCapturing()
         {
-            capturing = false;
-            if (capture != null)
-            {
-                capture.Stop();
-                capture.PreviewWindow = null;
-                capture.FrameEvent2 -= CaptureDone;
-                capture.Dispose();
-                capture = null;
-                cardDetection = null;
-            }
+            imageCapture.StopCapturing();
+            cardDetection = null;
         }
 
         private void StartCapturing()
         {
-            StopCapturing();
-            if (SelectedImageFeed == null)
-                return;
-            capture = new Capture(cameraFilters.VideoInputDevices[SelectedImageFeed.FilterIndex],
-                cameraFilters.AudioInputDevices[0]);
-            if (capture.VideoCaps == null)
-                return;
-            capture.FrameSize = CalculateCaptureFrameSize(capture.VideoCaps.MaxFrameSize);
+            var fScaleFactor = imageCapture.StartCapturing(SelectedImageFeed);
 
-            var fScaleFactor = Convert.ToDouble(capture.FrameSize.Height) / 480;
-            cardDetection = new CardDetection(fScaleFactor);
-            capture.PreviewWindow = captureBox;
-            capture.FrameEvent2 += CaptureDone;
-            capture.GrapImg();
-            capturing = true;
+            if(fScaleFactor.HasValue)
+                cardDetection = new CardDetection(fScaleFactor.Value);
         }
 
-        private void CaptureDone(Bitmap captured)
+        private void ImageCapture_ImageCaptured(object sender, CaptureEvent e)
         {
-            if (cardDetection == null || !capturing)
+            if (cardDetection == null)
                 return;
 
-            lock (captureThreadLocker)
-            {
-                captured = RotateImage(captured);
-                var fromSet = SelectedSetFilter ?? SetFilter.All;
 
-                var cards = cardDetection.Detect(captured, out var filtered);
+            var captured = e.CapturedImage;
+            var fromSet = SelectedSetFilter ?? SetFilter.All;
 
-                var cardIdentification = new CardIdentification();
-                var identifiedCards = cardIdentification.Identify(cards, referenceCards, fromSet);
-                var preview = CreatePreviewImage(identifiedCards, captured);
-                
-                FilteredPreviewImage = filtered;
-                PreviewImage = preview;
+            var cards = cardDetection.Detect(captured, out var filtered);
 
-                UpdateDetectedCards(identifiedCards);
-            }
+            var cardIdentification = new CardIdentification();
+            var identifiedCards = cardIdentification.Identify(cards, referenceCards, fromSet);
+            var preview = CreatePreviewImage(identifiedCards, captured);
+
+            FilteredPreviewImage = filtered;
+            PreviewImage = preview;
+
+            UpdateDetectedCards(identifiedCards);
         }
 
         public Bitmap CreatePreviewImage(List<IdentifiedCard> matches, Bitmap captured)
@@ -461,29 +410,6 @@ namespace CCGCurator
             {
                 DetectedCardsView.Refresh();
             });
-        }
-
-        private Bitmap RotateImage(Bitmap original)
-        {
-            if (RotationDegrees == 0)
-                return original;
-
-            var center = new PointF((float)original.Width / 2, (float)original.Height / 2);
-            var result = new Bitmap(original.Width, original.Height, original.PixelFormat);
-
-            result.SetResolution(original.HorizontalResolution, original.VerticalResolution);
-
-            using (var g = Graphics.FromImage(result))
-            {
-                var matrix = new Matrix();
-
-                matrix.RotateAt(RotationDegrees, center);
-
-                g.Transform = matrix;
-                g.DrawImage(original, new Point());
-            }
-
-            return result;
         }
 
         private void LoadData()

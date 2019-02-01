@@ -101,6 +101,7 @@
     <Compile Include="ActionCommand.cs" />
     <Compile Include="BitmapValueConverter.cs" />
     <Compile Include="IdentifiedCardCounter.cs" />
+    <Compile Include="ImageCapture.cs" />
     <Compile Include="ImageExtensions.cs" />
     <Compile Include="SetFilter.cs" />
     <Compile Include="ViewModelState.cs" />
