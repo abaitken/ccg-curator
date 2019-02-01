@@ -1,55 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
-using System.Windows.Forms;
 using System.Windows.Input;
 using CCGCurator.Common;
 using CCGCurator.Data;
-using DirectX.Capture;
-using Application = System.Windows.Application;
-using MessageBox = System.Windows.MessageBox;
-using Point = System.Drawing.Point;
-using Size = System.Drawing.Size;
 
 namespace CCGCurator
 {
     internal class MainWindowViewModel : ViewModel
     {
         private readonly ImageCapture imageCapture;
-
+        private List<CollectedCard> cardCollection;
+        private ICollectionView cardCollectionCollectionView;
         private CardDetection cardDetection;
-
-
         private IDictionary<string, ActionCommand> commands;
-
-
         private ICollectionView detectedCardsView;
-
-
         private Bitmap filteredPreviewImage;
-
         private IList<ImageFeed> imageFeeds;
-
-
+        private bool isFoil;
         private Bitmap previewImage;
         public List<Card> referenceCards = new List<Card>();
+        private IdentifiedCardCounter selectedIdentifiedCardCounter;
         private ImageFeed selectedImageFeed;
-
-
         private SetFilter selectedSetFilter;
-
-
         private IEnumerable<SetFilter> setFilters;
         private bool viewLoaded;
-
-
         private ViewModelState viewModelState;
 
         public MainWindowViewModel()
@@ -177,13 +157,72 @@ namespace CCGCurator
             }
         }
 
+        public ICollectionView CardCollectionCollectionView
+        {
+            get => cardCollectionCollectionView;
+            set
+            {
+                if (cardCollectionCollectionView == value)
+                    return;
+
+                cardCollectionCollectionView = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
+        public int RotationDegrees
+        {
+            get => imageCapture.RotationDegrees;
+            set
+            {
+                if (imageCapture.RotationDegrees == value)
+                    return;
+
+                imageCapture.RotationDegrees = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public IdentifiedCardCounter SelectedIdentifiedCardCounter
+        {
+            get => selectedIdentifiedCardCounter;
+            set
+            {
+                if (selectedIdentifiedCardCounter == value)
+                    return;
+
+                selectedIdentifiedCardCounter = value;
+                NotifyPropertyChanged();
+                RefreshCommands();
+            }
+        }
+
+        public bool IsFoil
+        {
+            get => isFoil;
+            set
+            {
+                if (isFoil == value)
+                    return;
+
+                isFoil = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         internal void Closing()
         {
             Settings.RotationDegrees = RotationDegrees;
             Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
             Settings.Save();
 
-            imageCapture.Close();
+            // hack - https://stackoverflow.com/questions/38528908/stopping-imediacontrol-never-ends
+            if (!Task.Run(() => StopCapturing()).Wait(TimeSpan.FromSeconds(5)))
+            {
+                MessageBox.Show("Could not stop the capturing stream. The application will now forcibly close.");
+                Environment.FailFast("Could not stop the capturing stream.");
+            }
         }
 
         internal void ViewLoaded(Window window)
@@ -232,22 +271,6 @@ namespace CCGCurator
             CardCollectionCollectionView = collectionView;
         }
 
-
-        ICollectionView cardCollectionCollectionView;
-        public ICollectionView CardCollectionCollectionView
-        {
-            get { return cardCollectionCollectionView; }
-            set
-            {
-                if (cardCollectionCollectionView == value)
-                    return;
-
-                cardCollectionCollectionView = value;
-                NotifyPropertyChanged();
-            }
-        }
-
-
         private void RecreateDetectedCardsView()
         {
             var collectionView = CollectionViewSource.GetDefaultView(DetectedCards);
@@ -256,13 +279,13 @@ namespace CCGCurator
             DetectedCardsView = collectionView;
         }
 
-
         private void SetupBindings(Window window)
         {
             var commands = new[]
             {
                 new ActionCommand("Clear", OnClear, new KeyGesture(Key.C, ModifierKeys.Control)),
-                new ActionCommand("Add", OnAdd, /*() => SelectedIdentifiedCardCounter != null, */new KeyGesture(Key.A, ModifierKeys.Control))
+                new ActionCommand("Add", OnAdd, /*() => SelectedIdentifiedCardCounter != null, */
+                    new KeyGesture(Key.A, ModifierKeys.Control))
             };
             Commands = commands.ToDictionary(k => k.Key, v => v);
 
@@ -270,38 +293,6 @@ namespace CCGCurator
             {
                 window.InputBindings.Add(command.CreateInputBinding());
                 window.CommandBindings.Add(command.CreateCommandBinding());
-            }
-        }
-
-
-        public int RotationDegrees
-        {
-            get { return imageCapture.RotationDegrees; }
-            set
-            {
-                if (imageCapture.RotationDegrees == value)
-                    return;
-
-                imageCapture.RotationDegrees = value;
-                NotifyPropertyChanged();
-            }
-        }
-
-
-        IdentifiedCardCounter selectedIdentifiedCardCounter;
-        private List<CollectedCard> cardCollection;
-
-        public IdentifiedCardCounter SelectedIdentifiedCardCounter
-        {
-            get { return selectedIdentifiedCardCounter; }
-            set
-            {
-                if (selectedIdentifiedCardCounter == value)
-                    return;
-
-                selectedIdentifiedCardCounter = value;
-                NotifyPropertyChanged();
-                RefreshCommands();
             }
         }
 
@@ -317,7 +308,7 @@ namespace CCGCurator
 
             var applicationSettings = new ApplicationSettings();
             var collectionData = new CardCollection(applicationSettings.CollectionDataPath);
-            var detectedCard = (IdentifiedCardCounter)parameter ?? SelectedIdentifiedCardCounter;
+            var detectedCard = (IdentifiedCardCounter) parameter ?? SelectedIdentifiedCardCounter;
             var collectedCard = new CollectedCard(Guid.NewGuid(), detectedCard.Card, CardQuality.Unspecified, IsFoil);
             collectionData.Add(collectedCard);
             cardCollection.Add(collectedCard);
@@ -341,10 +332,11 @@ namespace CCGCurator
 
         private void StartCapturing()
         {
-            var fScaleFactor = imageCapture.StartCapturing(SelectedImageFeed);
+            StopCapturing();
+            imageCapture.StartCapturing(SelectedImageFeed);
 
-            if(fScaleFactor.HasValue)
-                cardDetection = new CardDetection(fScaleFactor.Value);
+            var fScaleFactor = Convert.ToDouble(imageCapture.FrameSize.Height) / 480;
+            cardDetection = new CardDetection(fScaleFactor);
         }
 
         private void ImageCapture_ImageCaptured(object sender, CaptureEvent e)
@@ -370,13 +362,13 @@ namespace CCGCurator
 
         public Bitmap CreatePreviewImage(List<IdentifiedCard> matches, Bitmap captured)
         {
-            var resultImage = (Bitmap)captured.Clone();
+            var resultImage = (Bitmap) captured.Clone();
             var g = Graphics.FromImage(resultImage);
             var font = new Font("Tahoma", 25);
             foreach (var item in matches)
             {
-                var corners = item.corners;
-                var card = item.card;
+                var corners = item.Corners;
+                var card = item.Card;
                 //ContrastCorrection filter = new ContrastCorrection(15);
                 //filter.ApplyInPlace(card.cardArtBitmap);
                 g.DrawString(card.Name, font, Brushes.Black,
@@ -396,9 +388,9 @@ namespace CCGCurator
 
             foreach (var identifiedCard in identifiedCards)
             {
-                var existingItem = DetectedCards.FirstOrDefault(i => i.Card == identifiedCard.card);
+                var existingItem = DetectedCards.FirstOrDefault(i => i.Card == identifiedCard.Card);
                 var itemExists = existingItem != null;
-                var item = !itemExists ? new IdentifiedCardCounter(identifiedCard.card) : existingItem;
+                var item = !itemExists ? new IdentifiedCardCounter(identifiedCard.Card) : existingItem;
 
                 if (itemExists)
                     item.Occurrences++;
@@ -406,10 +398,7 @@ namespace CCGCurator
                     DetectedCards.Add(item);
             }
 
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                DetectedCardsView.Refresh();
-            });
+            Application.Current.Dispatcher.Invoke(() => { DetectedCardsView.Refresh(); });
         }
 
         private void LoadData()
@@ -431,21 +420,5 @@ namespace CCGCurator
                 SelectedSetFilter = allSetsFilter;
             });
         }
-
-
-        bool isFoil;
-        public bool IsFoil
-        {
-            get { return isFoil; }
-            set
-            {
-                if (isFoil == value)
-                    return;
-
-                isFoil = value;
-                NotifyPropertyChanged();
-            }
-        }
-
     }
 }

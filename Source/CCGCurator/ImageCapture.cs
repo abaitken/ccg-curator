@@ -3,36 +3,27 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using DirectX.Capture;
-using MessageBox = System.Windows.MessageBox;
 
 namespace CCGCurator
 {
-    class ImageCapture
+    internal class ImageCapture
     {
         private static readonly object captureThreadLocker = new object();
+        private readonly Control captureBox;
         private Filters cameraFilters;
         private Capture capture;
         private bool capturing;
-        private readonly Control captureBox;
 
         public ImageCapture()
         {
             captureBox = new PictureBox();
         }
 
-        public void Close()
-        {
-            // hack - https://stackoverflow.com/questions/38528908/stopping-imediacontrol-never-ends
-            if (!Task.Run(() => StopCapturing()).Wait(TimeSpan.FromSeconds(5)))
-            {
-                MessageBox.Show("Could not stop the capturing stream. The application will now forcibly close.");
-                Environment.FailFast("Could not stop the capturing stream.");
-            }
-        }
+        public int RotationDegrees { get; set; }
+
+        public Size FrameSize => capture.FrameSize;
 
         public List<ImageFeed> Init()
         {
@@ -56,24 +47,21 @@ namespace CCGCurator
             }
         }
 
-        public double? StartCapturing(ImageFeed feed)
+        public void StartCapturing(ImageFeed feed)
         {
             StopCapturing();
             if (feed == null)
-                return null;
+                return;
             capture = new Capture(cameraFilters.VideoInputDevices[feed.FilterIndex],
                 cameraFilters.AudioInputDevices[0]);
             if (capture.VideoCaps == null)
-                return null;
+                return;
             capture.FrameSize = CalculateCaptureFrameSize(capture.VideoCaps.MaxFrameSize);
 
-            var fScaleFactor = Convert.ToDouble(capture.FrameSize.Height) / 480;
             capture.PreviewWindow = captureBox;
             capture.FrameEvent2 += CaptureDone;
             capture.GrapImg();
             capturing = true;
-
-            return fScaleFactor;
         }
 
         private Size CalculateCaptureFrameSize(Size maxSize)
@@ -103,19 +91,17 @@ namespace CCGCurator
             lock (captureThreadLocker)
             {
                 captured = RotateImage(captured);
-                
+
                 ImageCaptured?.Invoke(this, new CaptureEvent(captured));
             }
         }
-
-        public int RotationDegrees { get; set; }
 
         private Bitmap RotateImage(Bitmap original)
         {
             if (RotationDegrees == 0)
                 return original;
 
-            var center = new PointF((float)original.Width / 2, (float)original.Height / 2);
+            var center = new PointF((float) original.Width / 2, (float) original.Height / 2);
             var result = new Bitmap(original.Width, original.Height, original.PixelFormat);
 
             result.SetResolution(original.HorizontalResolution, original.VerticalResolution);
@@ -136,11 +122,11 @@ namespace CCGCurator
 
     internal class CaptureEvent : EventArgs
     {
-        public Bitmap CapturedImage { get; }
-
         public CaptureEvent(Bitmap capturedImage)
         {
             CapturedImage = capturedImage;
         }
+
+        public Bitmap CapturedImage { get; }
     }
 }

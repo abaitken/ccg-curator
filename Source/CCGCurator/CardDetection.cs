@@ -111,8 +111,8 @@ namespace CCGCurator
 
                 var card = new DetectedCard
                 {
-                    corners = corners,
-                    cardBitmap = cardBitmap
+                    Corners = corners,
+                    CardBitmap = cardBitmap
                 };
 
                 detectedCards.Add(card);
@@ -190,7 +190,7 @@ namespace CCGCurator
 
             var pen = new Pen(Color.Red, 5);
 
-            foreach (var card in cards) g.DrawPolygon(pen, ToPointsArray(card.corners));
+            foreach (var card in cards) g.DrawPolygon(pen, ToPointsArray(card.Corners));
 
             pen.Dispose();
             g.Dispose();
@@ -201,19 +201,19 @@ namespace CCGCurator
 
     internal class DetectedCard
     {
-        public Bitmap cardBitmap;
-        public List<IntPoint> corners;
+        public Bitmap CardBitmap { get; set; }
+        public List<IntPoint> Corners { get; set; }
     }
 
     internal class IdentifiedCard
     {
-        public List<IntPoint> corners;
-        public Card card;
+        public List<IntPoint> Corners { get; }
+        public Card Card { get; }
 
         public IdentifiedCard(DetectedCard detectedCard, Card bestMatch)
         {
-            card = bestMatch;
-            corners = detectedCard.corners;
+            Card = bestMatch;
+            Corners = detectedCard.Corners;
         }
     }
 
@@ -228,7 +228,7 @@ namespace CCGCurator
             var matchedCards = new List<IdentifiedCard>();
             foreach (var detectedCard in detections)
             {
-                var cardHash = phash.ImageHash(detectedCard.cardBitmap);
+                var cardHash = phash.ImageHash(detectedCard.CardBitmap);
                 var bestMatch = FindBestMatch(cardHash, referenceCards, fromSet);
 
                 if (bestMatch != null)
