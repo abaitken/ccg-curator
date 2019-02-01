@@ -12,7 +12,6 @@ namespace CCGCurator
     {
         private static readonly object captureThreadLocker = new object();
         private readonly Control captureBox;
-        private Filters cameraFilters;
         private Capture capture;
         private bool capturing;
 
@@ -22,12 +21,13 @@ namespace CCGCurator
         }
 
         public int RotationDegrees { get; set; }
+        public ImageFeed ImageFeed { get; set; }
 
         public Size FrameSize { get; private set; }
 
-        public List<ImageFeed> Init()
+        public static List<ImageFeed> ImageFeeds()
         {
-            cameraFilters = new Filters();
+            var cameraFilters = new Filters();
             var imageFeeds = new List<ImageFeed>();
             for (var i = 0; i < cameraFilters.VideoInputDevices.Count; i++)
                 imageFeeds.Add(new ImageFeed(cameraFilters.VideoInputDevices[i].Name, i));
@@ -50,8 +50,10 @@ namespace CCGCurator
         public void StartCapturing(ImageFeed feed)
         {
             StopCapturing();
+            ImageFeed = feed;
             if (feed == null)
                 return;
+            var cameraFilters = new Filters();
             capture = new Capture(cameraFilters.VideoInputDevices[feed.FilterIndex],
                 cameraFilters.AudioInputDevices[0]);
             if (capture.VideoCaps == null)

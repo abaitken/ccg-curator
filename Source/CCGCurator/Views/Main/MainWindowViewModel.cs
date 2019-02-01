@@ -19,12 +19,10 @@ namespace CCGCurator
         private IDictionary<string, ActionCommand> commands;
         private ICollectionView detectedCardsView;
         private Bitmap filteredPreviewImage;
-        private IList<ImageFeed> imageFeeds;
         private bool isFoil;
         private Bitmap previewImage;
         public List<Card> referenceCards = new List<Card>();
         private IdentifiedCardCounter selectedIdentifiedCardCounter;
-        private ImageFeed selectedImageFeed;
         private SetFilter selectedSetFilter;
         private IEnumerable<SetFilter> setFilters;
         private ViewModelState viewModelState;
@@ -37,29 +35,6 @@ namespace CCGCurator
         }
 
         private ISettings Settings => Properties.Settings.Default;
-
-        public IList<ImageFeed> ImageFeeds
-        {
-            get => imageFeeds;
-            set
-            {
-                imageFeeds = value;
-                NotifyPropertyChanged();
-            }
-        }
-
-        public ImageFeed SelectedImageFeed
-        {
-            get => selectedImageFeed;
-            set
-            {
-                if (selectedImageFeed == value)
-                    return;
-                selectedImageFeed = value;
-                NotifyPropertyChanged();
-                StartCapturing();
-            }
-        }
 
         public SetFilter SelectedSetFilter
         {
@@ -154,20 +129,6 @@ namespace CCGCurator
             }
         }
 
-
-        public int RotationDegrees
-        {
-            get => imageCapture.RotationDegrees;
-            set
-            {
-                if (imageCapture.RotationDegrees == value)
-                    return;
-
-                imageCapture.RotationDegrees = value;
-                NotifyPropertyChanged();
-            }
-        }
-
         public IdentifiedCardCounter SelectedIdentifiedCardCounter
         {
             get => selectedIdentifiedCardCounter;
@@ -197,10 +158,6 @@ namespace CCGCurator
 
         internal void Closing()
         {
-            Settings.RotationDegrees = RotationDegrees;
-            Settings.WebcamIndex = SelectedImageFeed.FilterIndex;
-            Settings.Save();
-
             // hack - https://stackoverflow.com/questions/38528908/stopping-imediacontrol-never-ends
             if (!Task.Run(() => StopCapturing()).Wait(TimeSpan.FromSeconds(5)))
             {
@@ -218,25 +175,10 @@ namespace CCGCurator
 
             Task.Run(() =>
             {
-                ImageFeeds = imageCapture.Init();
-
-                var previousIndex = Settings.WebcamIndex;
-                if (previousIndex >= ImageFeeds.Count)
-                    previousIndex = 0;
-
-                RotationDegrees = ValidateRotation(Settings.RotationDegrees);
-                SelectedImageFeed = ImageFeeds[previousIndex];
+                StartCapturing();
                 ViewModelState = ViewModelState.Ready;
             });
             SetupBindings(window);
-        }
-
-        private int ValidateRotation(int settingsRotationDegrees)
-        {
-            var validValues = EnumerableExtensions.Range(-180, 180, 90);
-            if (validValues.Contains(settingsRotationDegrees))
-                return settingsRotationDegrees;
-            return 0;
         }
 
         private void RecreateDetectedCardsView()
@@ -299,7 +241,11 @@ namespace CCGCurator
         private void StartCapturing()
         {
             StopCapturing();
-            imageCapture.StartCapturing(SelectedImageFeed);
+
+            var imageFeeds = ImageCapture.ImageFeeds();
+            imageCapture.RotationDegrees = SettingsHelper.ValidateRotation(Settings.RotationDegrees);
+            var selectedImageFeed = imageFeeds[SettingsHelper.ValidateWebCamIndex(Settings.WebcamIndex, imageFeeds.Count)];
+            imageCapture.StartCapturing(selectedImageFeed);
 
             var fScaleFactor = Convert.ToDouble(imageCapture.FrameSize.Height) / 480;
             cardDetection = new CardDetection(fScaleFactor);
@@ -309,7 +255,6 @@ namespace CCGCurator
         {
             if (cardDetection == null)
                 return;
-
 
             var captured = e.CapturedImage;
             var fromSet = SelectedSetFilter ?? SetFilter.All;
@@ -385,6 +330,14 @@ namespace CCGCurator
                 SetFilters = setFilters;
                 SelectedSetFilter = allSetsFilter;
             });
+        }
+
+        public void ReloadSettings()
+        {
+            if (Settings.WebcamIndex != imageCapture.ImageFeed.FilterIndex)
+                StartCapturing();
+            else
+                imageCapture.RotationDegrees = Settings.RotationDegrees;
         }
     }
 }

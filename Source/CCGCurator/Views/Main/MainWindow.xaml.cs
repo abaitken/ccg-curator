@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using CCGCurator.Views.Settings;
 
 namespace CCGCurator
 {
@@ -36,6 +37,14 @@ namespace CCGCurator
         {
             var collectionWindow = new CollectionWindow {Owner = this};
             collectionWindow.Show();
+        }
+
+        private void Settings_OnClick(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new SettingsWindow {Owner = this};
+            var result = settingsWindow.ShowDialog();
+            if (result.HasValue && result.Value)
+                ViewModel.ReloadSettings();
         }
     }
 }

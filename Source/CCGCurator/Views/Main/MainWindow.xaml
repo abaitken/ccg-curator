@@ -53,17 +53,7 @@
         </Grid.ColumnDefinitions>
         <!-- COL 0 -->
         <GroupBox Header="Preview">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <TextBlock Text="Rotation:" />
-                <Slider Grid.Row="1" Minimum="-180" Maximum="180" AutoToolTipPlacement="BottomRight" TickFrequency="90"
-                        IsSnapToTickEnabled="True" TickPlacement="Both" Value="{Binding RotationDegrees}" />
-                <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" Grid.Row="2" />
-            </Grid>
+            <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
         </GroupBox>
 
         <!-- COL 1 -->
@@ -74,19 +64,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-
-            <!-- ROW 0 -->
-            <GroupBox Header="Image feed"
-                      Grid.Row="0">
-                <ComboBox ItemsSource="{Binding ImageFeeds}" DockPanel.Dock="Top"
-                          SelectedItem="{Binding SelectedImageFeed}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </GroupBox>
 
             <!-- ROW 1 -->
             <GroupBox Header="Detection view" Grid.Row="1">
@@ -135,11 +112,12 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Button Content="Add" Command="{Binding Commands[Add]}" Grid.Column="0" />
                         <Button Content="Clear" Command="{Binding Commands[Clear]}" Grid.Column="1" />
-                        <Button Content="Open Collection" Grid.Column="2" Click="OpenCollection_OnClick" />
+                        <Button Content="My Collection" Grid.Column="2" Click="OpenCollection_OnClick" />
+                        <Button Content="Settings" Grid.Column="3" Click="Settings_OnClick" />
                     </Grid>
                 </Grid>
 

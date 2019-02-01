@@ -125,6 +125,10 @@
     </Compile>
     <Compile Include="Views\Main\MainWindowViewModel.cs" />
     <Compile Include="Views\Main\SetFilter.cs" />
+    <Compile Include="Views\Settings\SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Settings\SettingsWindowViewModel.cs" />
     <Compile Include="Views\ViewModelState.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -179,6 +183,10 @@
     <Page Include="Views\Main\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Settings\SettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
