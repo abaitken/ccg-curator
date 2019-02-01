@@ -5,7 +5,7 @@ namespace CCGCurator
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    internal partial class MainWindow : Window
     {
         public MainWindow()
         {
@@ -25,10 +25,16 @@ namespace CCGCurator
             ViewModel.ViewLoaded(this);
         }
 
-        internal MainWindowViewModel ViewModel
+        public MainWindowViewModel ViewModel
         {
-            get { return DataContext as MainWindowViewModel; }
-            set { DataContext = value; }
+            get => DataContext as MainWindowViewModel;
+            set => DataContext = value;
+        }
+
+        private void OpenCollection_OnClick(object sender, RoutedEventArgs e)
+        {
+            var collectionWindow = new CollectionWindow {Owner = this};
+            collectionWindow.Show();
         }
     }
 }

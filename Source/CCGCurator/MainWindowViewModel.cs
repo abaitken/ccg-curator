@@ -15,8 +15,6 @@ namespace CCGCurator
     internal class MainWindowViewModel : ViewModel
     {
         private readonly ImageCapture imageCapture;
-        private List<CollectedCard> cardCollection;
-        private ICollectionView cardCollectionCollectionView;
         private CardDetection cardDetection;
         private IDictionary<string, ActionCommand> commands;
         private ICollectionView detectedCardsView;
@@ -29,7 +27,6 @@ namespace CCGCurator
         private ImageFeed selectedImageFeed;
         private SetFilter selectedSetFilter;
         private IEnumerable<SetFilter> setFilters;
-        private bool viewLoaded;
         private ViewModelState viewModelState;
 
         public MainWindowViewModel()
@@ -157,19 +154,6 @@ namespace CCGCurator
             }
         }
 
-        public ICollectionView CardCollectionCollectionView
-        {
-            get => cardCollectionCollectionView;
-            set
-            {
-                if (cardCollectionCollectionView == value)
-                    return;
-
-                cardCollectionCollectionView = value;
-                NotifyPropertyChanged();
-            }
-        }
-
 
         public int RotationDegrees
         {
@@ -225,16 +209,12 @@ namespace CCGCurator
             }
         }
 
-        internal void ViewLoaded(Window window)
+        protected override void OnViewLoaded(Window window)
         {
-            if (viewLoaded)
-                return;
-
-            viewLoaded = true;
+            base.OnViewLoaded(window);
 
             Task.Run(() => { LoadData(); });
             Task.Run(() => { RecreateDetectedCardsView(); });
-            Task.Run(() => { LoadCardCollection(); });
 
             Task.Run(() =>
             {
@@ -257,18 +237,6 @@ namespace CCGCurator
             if (validValues.Contains(settingsRotationDegrees))
                 return settingsRotationDegrees;
             return 0;
-        }
-
-        private void LoadCardCollection()
-        {
-            var applicationSettings = new ApplicationSettings();
-            var collectionData = new CardCollection(applicationSettings.CollectionDataPath);
-            cardCollection = new List<CollectedCard>(collectionData.GetCollection());
-            collectionData.Close();
-
-
-            var collectionView = CollectionViewSource.GetDefaultView(cardCollection);
-            CardCollectionCollectionView = collectionView;
         }
 
         private void RecreateDetectedCardsView()
@@ -311,8 +279,6 @@ namespace CCGCurator
             var detectedCard = (IdentifiedCardCounter) parameter ?? SelectedIdentifiedCardCounter;
             var collectedCard = new CollectedCard(Guid.NewGuid(), detectedCard.Card, CardQuality.Unspecified, IsFoil);
             collectionData.Add(collectedCard);
-            cardCollection.Add(collectedCard);
-            CardCollectionCollectionView.Refresh();
             collectionData.Close();
             OnClear(null);
             IsFoil = false;

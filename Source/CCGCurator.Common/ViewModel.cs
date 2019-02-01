@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 
 namespace CCGCurator.Common
 {
@@ -10,6 +11,20 @@ namespace CCGCurator.Common
         protected void NotifyPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool viewLoaded;
+
+        public void ViewLoaded(Window window)
+        {
+            if(viewLoaded)
+                return;
+            viewLoaded = true;
+            OnViewLoaded(window);
+        }
+
+        protected virtual void OnViewLoaded(Window window)
+        {
         }
     }
 }

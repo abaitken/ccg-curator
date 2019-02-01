@@ -23,7 +23,7 @@ namespace CCGCurator
 
         public int RotationDegrees { get; set; }
 
-        public Size FrameSize => capture.FrameSize;
+        public Size FrameSize { get; private set; }
 
         public List<ImageFeed> Init()
         {
@@ -56,7 +56,9 @@ namespace CCGCurator
                 cameraFilters.AudioInputDevices[0]);
             if (capture.VideoCaps == null)
                 return;
-            capture.FrameSize = CalculateCaptureFrameSize(capture.VideoCaps.MaxFrameSize);
+
+            FrameSize = CalculateCaptureFrameSize(capture.VideoCaps.MaxFrameSize);
+            capture.FrameSize = FrameSize;
 
             capture.PreviewWindow = captureBox;
             capture.FrameEvent2 += CaptureDone;

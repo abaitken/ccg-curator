@@ -100,11 +100,19 @@
     </ApplicationDefinition>
     <Compile Include="ActionCommand.cs" />
     <Compile Include="BitmapValueConverter.cs" />
+    <Compile Include="CollectionWindow.xaml.cs">
+      <DependentUpon>CollectionWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CollectionWindowViewModel.cs" />
     <Compile Include="IdentifiedCardCounter.cs" />
     <Compile Include="ImageCapture.cs" />
     <Compile Include="ImageExtensions.cs" />
     <Compile Include="SetFilter.cs" />
     <Compile Include="ViewModelState.cs" />
+    <Page Include="CollectionWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
