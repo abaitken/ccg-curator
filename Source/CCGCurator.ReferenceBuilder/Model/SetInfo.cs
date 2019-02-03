@@ -1,10 +1,13 @@
-﻿using CCGCurator.Data.Model;
+﻿using System.Drawing;
+using CCGCurator.Common;
+using CCGCurator.Data.Model;
 
 namespace CCGCurator.ReferenceBuilder.Model
 {
-    internal class SetInfo
+    internal class SetInfo : ViewModel
     {
         private readonly IDataActionsNotifier actionsNotifier;
+        private Bitmap icon;
         private bool inDatabase;
 
         public SetInfo(Set set, bool inDatabase, IDataActionsNotifier actionsNotifier)
@@ -22,8 +25,25 @@ namespace CCGCurator.ReferenceBuilder.Model
             get => inDatabase;
             set
             {
+                if (inDatabase == value)
+                    return;
+
                 inDatabase = value;
                 actionsNotifier.Update(Set, InDatabase);
+                NotifyPropertyChanged();
+            }
+        }
+
+        public Bitmap Icon
+        {
+            get => icon;
+            set
+            {
+                if (icon == value)
+                    return;
+
+                icon = value;
+                NotifyPropertyChanged();
             }
         }
     }

@@ -6,5 +6,6 @@ namespace CCGCurator.ReferenceBuilder.ImageSources
     internal abstract class CardImageSource
     {
         internal abstract Bitmap GetImage(Card card, Set set);
+        internal abstract Bitmap GetImage(Set set, Bitmap missing);
     }
 }

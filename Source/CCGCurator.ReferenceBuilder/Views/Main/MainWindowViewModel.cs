@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Resources;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Windows;
 using System.Windows.Data;
 using CCGCurator.Common;
 using CCGCurator.Data;
@@ -14,7 +18,9 @@ using CCGCurator.Data.Model;
 using CCGCurator.Data.ReferenceData;
 using CCGCurator.ReferenceBuilder.Actions;
 using CCGCurator.ReferenceBuilder.Data;
+using CCGCurator.ReferenceBuilder.ImageSources;
 using CCGCurator.ReferenceBuilder.Model;
+using CCGCurator.ReferenceBuilder.Properties;
 
 namespace CCGCurator.ReferenceBuilder.Views.Main
 {
@@ -181,7 +187,7 @@ namespace CCGCurator.ReferenceBuilder.Views.Main
             timer.Stop();
 
             NotifyPropertyChanged(nameof(StatusText));
-            UpdateCurrentSetView();
+            PendingActions.Clear();
             NotifyPropertyChanged(nameof(ViewModelState));
         }
 
@@ -217,12 +223,10 @@ namespace CCGCurator.ReferenceBuilder.Views.Main
             }
         }
 
-        public void ViewLoaded()
+        protected override void OnViewLoaded(Window window)
         {
-            if (viewLoaded)
-                return;
-            viewLoaded = true;
-
+            base.OnViewLoaded(window);
+            
             ResolveImageCachePath();
             UpdateCurrentSetView();
         }
@@ -260,11 +264,37 @@ namespace CCGCurator.ReferenceBuilder.Views.Main
                 }
 
                 SetInfo = setInfo;
+                LoadSetIcons();
                 var collectionView = CollectionViewSource.GetDefaultView(SetInfo);
                 collectionView.Filter = SetListBoxFilter;
                 SetInfoCollectionView = collectionView;
                 NotifyPropertyChanged(nameof(ViewModelState));
             });
+        }
+
+        private void LoadSetIcons()
+        {
+            Task.Run(() =>
+            {
+                var noImage = LoadNoImage();
+
+                var imageSource = new DualImageSource(ImageCachePath);
+
+                foreach (var set in SetInfo)
+                {
+                    set.Icon = imageSource.GetImage(set.Set, noImage);
+                }
+            });
+        }
+
+        private static Bitmap LoadNoImage()
+        {
+            var resourceAssembly = Assembly.GetExecutingAssembly();
+            using (var manifestResourceStream =
+                resourceAssembly.GetManifestResourceStream("CCGCurator.ReferenceBuilder.Media.NoImage.png"))
+            {
+                return new Bitmap(manifestResourceStream);
+            }
         }
 
         private bool SetListBoxFilter(object obj)

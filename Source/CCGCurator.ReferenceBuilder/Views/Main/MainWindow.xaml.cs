@@ -20,8 +20,8 @@ namespace CCGCurator.ReferenceBuilder.Views.Main
 
         private MainWindowViewModel ViewModel
         {
-            get { return DataContext as MainWindowViewModel; }
-            set { DataContext = value; }
+            get => DataContext as MainWindowViewModel;
+            set => DataContext = value;
         }
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
@@ -31,7 +31,7 @@ namespace CCGCurator.ReferenceBuilder.Views.Main
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            ViewModel.ViewLoaded();
+            ViewModel.ViewLoaded(this);
         }
 
         private void CollectData_Click(object sender, RoutedEventArgs e)

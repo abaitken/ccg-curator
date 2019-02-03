@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="CCG Curator" Height="450" Width="800">
     <Window.Resources>
-        <views:BitmapValueConverter x:Key="BitmapValueConverter" />
+        <common:BitmapValueConverter x:Key="BitmapValueConverter" />
         <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
         <views:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
@@ -56,10 +56,10 @@
                 <Image Source="{Binding PreviewImage, Converter={StaticResource BitmapValueConverter}}" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <main:OutlinedTextBlock Text="{Binding TopRankedDetection.Name}"
-                                            FontSize="20" Stroke="Black" Fill="White" StrokeThickness="2" />
+                                            FontSize="30" Stroke="Black" Fill="White" StrokeThickness="2" />
 
                     <main:OutlinedTextBlock Text="(Foil)" Visibility="{Binding IsFoil, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                            FontSize="20" Stroke="Black" Fill="White" StrokeThickness="2" />
+                                            FontSize="30" Stroke="Black" Fill="White" StrokeThickness="2" />
                 </StackPanel>
             </Grid>
         </GroupBox>

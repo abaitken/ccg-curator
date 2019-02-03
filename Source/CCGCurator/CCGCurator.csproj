@@ -113,7 +113,6 @@
     <Compile Include="ImageFeed.cs" />
     <Compile Include="ISettings.cs" />
     <Compile Include="Properties\SettingsPart.cs" />
-    <Compile Include="Views\BitmapValueConverter.cs" />
     <Compile Include="Views\BooleanToVisibilityConverter.cs" />
     <Compile Include="Views\Collection\CollectionWindow.xaml.cs">
       <DependentUpon>CollectionWindow.xaml</DependentUpon>
@@ -126,7 +125,6 @@
       <DependentUpon>DetectionPreviewWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\DetectionPreview\DetectionPreviewWindowViewModel.cs" />
-    <Compile Include="Views\ImageExtensions.cs" />
     <Compile Include="Views\Main\IdentifiedCardCounter.cs" />
     <Compile Include="Views\ImageTools.cs" />
     <Compile Include="Views\Main\MainWindow.xaml.cs">

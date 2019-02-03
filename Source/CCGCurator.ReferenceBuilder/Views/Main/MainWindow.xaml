@@ -11,6 +11,38 @@
         Title="MainWindow" Height="450" Width="800">
     <Window.Resources>
         <common:EnumerationBooleanValueConverter x:Key="EnumerationBooleanValueConverter" />
+        <common:BitmapValueConverter x:Key="BitmapValueConverter" />
+
+        <Style TargetType="FrameworkElement">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Slider">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ListView">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="Image">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="2" />
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.Resources>
@@ -62,10 +94,15 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <ListBox x:Name="SetListBox" ItemsSource="{Binding SetInfoCollectionView}" Grid.Column="0"
-                     IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static views:ViewModelState.Ready}}">
+                      IsEnabled="{Binding ViewModelState, Converter={StaticResource EnumerationBooleanValueConverter}, ConverterParameter={x:Static views:ViewModelState.Ready}}">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type model:SetInfo}">
-                        <CheckBox Content="{Binding Name}" IsChecked="{Binding InDatabase}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Border Height="24" Width="24">
+                                <Image Source="{Binding Icon, Converter={StaticResource BitmapValueConverter}}" />
+                            </Border>
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding InDatabase}" VerticalAlignment="Center" />
+                        </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

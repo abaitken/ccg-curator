@@ -5,12 +5,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CCGCurator.Views.DetectionPreview"
-        xmlns:ccgCurator="clr-namespace:CCGCurator"
-        xmlns:views="clr-namespace:CCGCurator.Views"
+        xmlns:common="clr-namespace:CCGCurator.Common;assembly=CCGCurator.Common"
         mc:Ignorable="d"
         Title="DetectionPreviewWindow" Height="450" Width="800">
     <Window.Resources>
-        <views:BitmapValueConverter x:Key="BitmapValueConverter" />
+        <common:BitmapValueConverter x:Key="BitmapValueConverter" />
     </Window.Resources>
     <Grid>
         <Image Source="{Binding FilteredPreviewImage, Converter={StaticResource BitmapValueConverter}}" />

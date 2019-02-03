@@ -35,5 +35,27 @@ namespace CCGCurator.ReferenceBuilder.ImageSources
 
             return result;
         }
+
+        internal override Bitmap GetImage(Set set, Bitmap missing)
+        {
+            var result = diskSource.GetImage(set, missing);
+            if (result != null)
+                return result;
+
+            result = webSource.GetImage(set, missing);
+
+            if (result != null)
+            {
+                var imagePath = diskSource.MakeSetImagePath(set);
+
+                var setFolder = Path.GetDirectoryName(imagePath);
+                if (!Directory.Exists(setFolder))
+                    Directory.CreateDirectory(setFolder);
+
+                result.Save(imagePath, ImageFormat.Png);
+            }
+
+            return result;
+        }
     }
 }
